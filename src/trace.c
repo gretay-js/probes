@@ -67,7 +67,10 @@ int get_perf_event(size_t offset, char *app_filename, int pid, bool retprobe) {
       .uprobe_path=(__u64)((void*)app_filename),
       .probe_offset=offset
     };
-  return syscall(__NR_perf_event_open, &attr, pid, -1, -1, PERF_FLAG_FD_CLOEXEC);
+  uid_up();
+  int res = syscall(__NR_perf_event_open, &attr, pid, -1, -1, PERF_FLAG_FD_CLOEXEC);
+  uid_down ();
+  return res;
 }
 
 #define MAX_SIZE 1024
@@ -271,7 +274,9 @@ int main(int argc, char *argv[]) {
    *   goto signal_and_error;
    * } */
 
+  uid_up ();
   pid_t cpid = fork();
+  uid_down ();
   if(cpid==-1) {
     fprintf(stderr, "error doing fork\n");
     goto free_notes_and_error;
@@ -281,6 +286,7 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "ptrace traceme error\n");
       return 1;
     }
+
     execl(app_filename, app_filename, NULL);
     fprintf(stderr, "error running exec\n");
     return 1;
