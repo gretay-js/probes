@@ -1,0 +1,5 @@
+external code used:
+- bpf_helpers.h
+  - used to be at https://github.com/torvalds/linux/raw/master/tools/testing/selftests/bpf/bpf_helpers.h
+- perf_buffer.h/perf_buffer.c
+  - https://github.com/torvalds/linux/blob/master/tools/lib/bpf/libbpf.c
