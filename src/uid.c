@@ -22,8 +22,6 @@ void uid_up (void)
   if (status < 0) {
     fprintf (stderr, "Couldn't set uid up to %d.\n", euid);
     exit (status);
-  } else {
-    fprintf (stderr, "Set uid up to %d.\n", euid);
   }
 }
 
@@ -38,8 +36,6 @@ void uid_down (void)
   if (status < 0) {
     fprintf (stderr, "Couldn't set uid down to %d.\n", ruid);
     exit (status);
-  } else {
-    fprintf (stderr, "Set uid down to %d.\n", ruid);
   }
 }
 
@@ -48,6 +44,5 @@ void uid_init (void)
   /* Remember the real and effective user IDs.  */
   ruid = getuid ();
   euid = geteuid ();
-  fprintf (stdout, "ruid=%d,euid=%d\n", ruid, euid);
   uid_down ();
 }

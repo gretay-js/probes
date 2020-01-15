@@ -134,12 +134,13 @@ int loop_body(int i, struct probe_info *arg_info,
 SEC("handler")
 int _handler(struct pt_regs *ctx) {
   struct probe_info *arg_info = get_big(&from_trace, ctx->rip);
-  // CR rcummings: do something with the probe name
-  //printk("activated at probe \"%s\"\n", arg_info->name);
   if(!arg_info) {
     printk("no argument info\n");
     return 1;
   }
+  // CR rcummings: do something with the probe name
+  printk("activated at probe \"%s\"\n", arg_info->name);
+
   struct result *result = get(&scratch, 0);
   if(!result) {
     printk("no scratch space\n");

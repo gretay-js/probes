@@ -20,6 +20,7 @@
 #include <linux/bpf.h>
 #include <linux/perf_event.h>
 
+#include <openssl/md5.h>
 #include "bpf_elf.h"
 #include "bpf_syscall_helpers.h"
 #include "perf_buffer.h"
@@ -31,21 +32,39 @@
 #define LOG_BUF_SIZE 2000000
 char bpf_log_buf[LOG_BUF_SIZE];
 
-int read_file(char *filename, FILE **reader) {
-  *reader = fopen(filename, "r");
-  if(!*reader) {
-    fprintf(stderr, "%s: No such file or directory\n", filename);
-    return 1;
-  }
-  return 0;
-}
+const char eBPF_MD5[] = "81b60fcc4f98076b289a58751cf8664a";
+#define READ_CHUNK_SIZE 1024
 
-int probe_offset(char *app_filename, size_t *probe_offset) {
-  FILE *reader = NULL;
-  if(read_file(app_filename, &reader)) {
+int certify_bpf(char *filename) {
+  /* CR gyorsh: use exact comparison of contents instead of md5. */
+
+  unsigned char c[MD5_DIGEST_LENGTH];
+  FILE *reader = fopen (filename, "rb");
+  MD5_CTX mdContext;
+  int bytes;
+  unsigned char data[READ_CHUNK_SIZE];
+
+  // compute md5 of the contents
+  if (reader == NULL) {
+    fprintf (stderr, "Cannot open file  %s.\n", filename);
     return 1;
   }
-  *probe_offset = 0x10326;
+  MD5_Init (&mdContext);
+  while ((bytes = fread (data, 1, READ_CHUNK_SIZE, reader)) != 0)
+    MD5_Update (&mdContext, data, bytes);
+  MD5_Final (c,&mdContext);
+  fclose (reader);
+
+  char actual[MD5_DIGEST_LENGTH*2+1] = "";
+  for(int i = 0; i < MD5_DIGEST_LENGTH; i++)
+    snprintf(&actual[i*2], 3, "%02x", (unsigned int) c[i]);
+
+  // compare to saved md5
+  if (strcmp(eBPF_MD5, actual)) {
+    fprintf (stderr, "Mismatch md5 for eBPF code from %s\n", filename);
+    fprintf (stderr, "Expected: %s\nActual:   %s\n", eBPF_MD5, actual);
+    return 1;
+  }
   return 0;
 }
 
@@ -224,16 +243,22 @@ int modify_semaphore(pid_t pid, int delta, size_t addr) {
 
 int main(int argc, char *argv[]) {
   uid_init ();
-  if(argc!=2) {
-    fprintf(stderr, "usage: %s app\n", argv[0]);
+  if(argc!=3) {
+    fprintf(stderr, "usage: %s <eBPF_handler.o> <app.exe>\n", argv[0]);
     return 1;
   }
   char *program_name = argv[0];
-  char *app_filename = argv[1];
+  char *bpf_filename = argv[1];
+  char *app_filename = argv[2];
+
+  if (certify_bpf(bpf_filename)) {
+    fprintf(stderr, "Cannot certify eBPF code from %s\n", bpf_filename);
+    return 2;
+  }
 
   struct bpf_elf_result bpf_elf_result;
   struct bpf_elf_params bpf_elf_params =
-    { .bpf_filename = "handler.o",
+    { .bpf_filename = bpf_filename,
       .bpf_section_name = "handler",
       .map_section_name = "maps",
     };
@@ -248,7 +273,8 @@ int main(int argc, char *argv[]) {
 
   free(bpf_elf_result.insns);
   if(bpf_fd == -1) {
-    fprintf(stderr, "%s: failed to load eBPF code: errno=%d\n", program_name, errno);
+    fprintf(stderr, "%s: failed to load eBPF code from %s: errno=%d\n",
+            program_name, bpf_filename, errno);
     fprintf(stderr, "%s\n", bpf_log_buf);
     goto free_maps_and_error;
   }
@@ -269,14 +295,7 @@ int main(int argc, char *argv[]) {
     goto signal_and_error;
   }
 
-  /* if (setuid(getuid()) < 0) {
-   *   fprintf(stderr, "error setuid\n");
-   *   goto signal_and_error;
-   * } */
-
-  uid_up ();
   pid_t cpid = fork();
-  uid_down ();
   if(cpid==-1) {
     fprintf(stderr, "error doing fork\n");
     goto free_notes_and_error;
@@ -286,7 +305,6 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "ptrace traceme error\n");
       return 1;
     }
-
     execl(app_filename, app_filename, NULL);
     fprintf(stderr, "error running exec\n");
     return 1;

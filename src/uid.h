@@ -1,3 +1,4 @@
+/* Helper for making syscalls that require root privilages */
 /* Restore the effective UID to its original value. */
 void uid_up (void);
 
