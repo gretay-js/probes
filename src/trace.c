@@ -241,15 +241,44 @@ int modify_semaphore(pid_t pid, int delta, size_t addr) {
   return 0;
 }
 
+int usage(char *program_name) {
+    fprintf(stderr, "Usage: \n");
+    fprintf(stderr, "       %s <eBPF_handler.o> <app.exe> <arg> ...\n", program_name);
+    fprintf(stderr, "       %s <eBPF_handler.o> -p <pid>\n", program_name);
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
   uid_init ();
-  if(argc!=3) {
-    fprintf(stderr, "usage: %s <eBPF_handler.o> <app.exe>\n", argv[0]);
-    return 1;
-  }
+  // parse arguments
   char *program_name = argv[0];
+  if(argc<3) {
+    fprintf(stderr, "Missing arguments\n");
+    return usage (program_name);
+  }
+
   char *bpf_filename = argv[1];
+  bool is_attach = false;
   char *app_filename = argv[2];
+  pid_t cpid = -1; // pid to attach ptrace to
+  if (!strcmp(app_filename, "-p")) {
+    if (argc != 4) {
+      fprintf(stderr, "Too many arguments\n");
+      return usage (program_name);
+    }
+    is_attach = true;
+    if (sscanf(argv[3], "%d", &cpid) != 1) {
+      fprintf(stderr, "Cannot read pid %s\n", argv[3]);
+      return usage (program_name);
+    };
+    fprintf(stderr, "Attach is not yet implemented\n");
+    return 0;
+  } else {
+    // The array of pointers must be terminated by a NULL pointer.
+    int i = 2;
+    for (; i < argc; i++) argv[i-2] = argv[i];
+    argv[i-2] = NULL;
+  }
 
   if (certify_bpf(bpf_filename)) {
     fprintf(stderr, "Cannot certify eBPF code from %s\n", bpf_filename);
@@ -273,8 +302,8 @@ int main(int argc, char *argv[]) {
 
   free(bpf_elf_result.insns);
   if(bpf_fd == -1) {
-    fprintf(stderr, "%s: failed to load eBPF code from %s: errno=%d\n",
-            program_name, bpf_filename, errno);
+    fprintf(stderr, "failed to load eBPF code from %s: errno=%d\n",
+            bpf_filename, errno);
     fprintf(stderr, "%s\n", bpf_log_buf);
     goto free_maps_and_error;
   }
@@ -295,7 +324,7 @@ int main(int argc, char *argv[]) {
     goto signal_and_error;
   }
 
-  pid_t cpid = fork();
+  cpid = fork();
   if(cpid==-1) {
     fprintf(stderr, "error doing fork\n");
     goto free_notes_and_error;
@@ -305,7 +334,7 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "ptrace traceme error\n");
       return 1;
     }
-    execl(app_filename, app_filename, NULL);
+    execv(app_filename, argv);
     fprintf(stderr, "error running exec\n");
     return 1;
   }
