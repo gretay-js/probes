@@ -1,6 +1,8 @@
 #include <linux/ptrace.h>
 #include <linux/bpf.h>
 #include "bpf_helpers.h"
+#include "caml/mlvalues.h"
+
 #ifndef printk
 #define printk(fmt, ...) \
   do { \
@@ -24,12 +26,25 @@ int set(void *map, int index, void *value) {
   return bpf_map_update_elem(map, &index, value, BPF_EXIST);
 }
 
+#define MAX_NAME 100
+#define MAX_SIZE 1024
+#define MAX_ARGS 12
 struct probe_info {
-  char name[100];
+  char name[MAX_NAME];
   int num_args;
-  int registers[12];
+  int registers[MAX_ARGS];
+};
+enum type = { INTEGER, STRING, FLOAT, CUSTOM, HEADER };
+struct __attribute__((packed)) result {
+  __u64 time;
+  int num_args;
+  enum type type[MAX_ARGS];
+  int arg_offset[MAX_ARGS];
+  int data_used;
+  char data[MAX_SIZE];
 };
 
+#define MAX_SINGLE 256
 struct bpf_map_def SEC("maps") perf_event_array =
   { .type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
     .key_size = sizeof(int),
@@ -43,19 +58,6 @@ struct bpf_map_def SEC("maps") from_trace =
     .value_size = sizeof(struct probe_info),
     .max_entries = 100,
   };
-
-#define MAX_SIZE 1024
-#define MAX_SINGLE 256
-#define MAX_ARGS 12
-struct __attribute__((packed)) result {
-  __u64 time;
-  int num_args;
-  char is_string[MAX_ARGS];
-  char is_integer[MAX_ARGS];
-  int arg_offset[MAX_ARGS];
-  int data_used;
-  char data[MAX_SIZE];
-};
 
 struct bpf_map_def SEC("maps") scratch =
   { .type = BPF_MAP_TYPE_ARRAY,
@@ -94,36 +96,52 @@ int loop_body(int i, struct probe_info *arg_info,
     printk("data used somehow became negative\n");
     return 1;
   }
-  if(result->data_used>MAX_SIZE-MAX_SINGLE) {
+  // we need at least 8 bytes of space to record this value
+  if(result->data_used>MAX_SIZE-8) {
     printk("out of space\n");
     return 1;
   }
   char *data = result->data + result->data_used;
   result->arg_offset[i] = result->data_used;
-  if(value&1) {
+  if(Is_long(value)) {
     result->is_integer[i] = 1;
-    *(__u64*)data = value>>1;
+    *(__u64*)data = Long_val(value);
     result->data_used += 8;
   }
   else {
-    __u64 header;
+    header_t header;
     if(bpf_probe_read(&header, 8, (char*)(value - 8))) {
       printk("error reading header\n");
       return 1;
     }
-    if((header&0xFF)==252) {
-      result->is_string[i] = 1;
+    switch (Tag_hd(header)) {
+    case String_tag: {
+      result->type = String;
       int len = bpf_probe_read_str
         ((char*)data,
-         MAX_SINGLE,
+         (MAX_SIZE - result->data_used),
          (char*)value);
       if(len<0) {
         printk("error copying string: %d\n", len);
         return 1;
       }
       result->data_used += len;
-    }
-    else {
+    } break;
+    case Double_tag:
+      result->type = Float;
+      int len = Double_wosize * 8;
+      if(bpf_probe_read((char*)data, MAX_SIZE - len, (char*)(value - len))) {
+        printk("error reading float\n");
+        return 1;
+      }
+      break;
+    case Custom_tag:
+      int size = Wosize_hd(header);
+      __u64 val = Val_hp(header);
+      if (size = 1) then
+      result->type = Integer;
+      break;
+    default:
       *(__u64*)data = value;
       result->data_used += 8;
     }

@@ -92,13 +92,20 @@ int get_perf_event(size_t offset, char *app_filename, int pid, bool retprobe) {
   return res;
 }
 
+#define MAX_NAME 100
 #define MAX_SIZE 1024
 #define MAX_ARGS 12
+
+struct probe_info {
+  char name[MAX_NAME];
+  int num_args;
+  int registers[MAX_ARGS];
+};
+enum type = { INT, STRING, FLOAT, HEADER };
 struct __attribute__((packed)) result {
   __u64 time;
   int num_args;
-  char is_string[MAX_ARGS];
-  char is_integer[MAX_ARGS];
+  enum type type[MAX_ARGS];
   int arg_offset[MAX_ARGS];
   int data_used;
   char data[MAX_SIZE];
@@ -148,11 +155,6 @@ int get_map_fds(size_t map_count, struct bpf_map *maps,
   return 0;
 }
 
-struct probe_info {
-  char name[100];
-  int num_args;
-  int registers[12];
-};
 
 int before_running(size_t map_count, struct bpf_map *maps, struct perf_buffer **pb,
                    struct note_result *note_result) {
@@ -193,7 +195,7 @@ int before_running(size_t map_count, struct bpf_map *maps, struct perf_buffer **
 
   for(size_t note_index = 0; note_index < note_result->num_probes; ++note_index) {
     struct probe_note *note = note_result->probe_notes[note_index];
-    if(note->num_args>12) {
+    if(note->num_args>MAX_ARGS) {
       fprintf(stderr, "too many args\n");
       return 1;
     }
@@ -236,9 +238,8 @@ int after_running(size_t map_count, struct bpf_map *maps) {
 }
 
 int modify_semaphore(pid_t pid, int delta, size_t addr) {
-  __u16 data = ptrace(PTRACE_PEEKTEXT, pid, addr, NULL);
-  ptrace(PTRACE_POKETEXT, pid, addr, data+delta);
-  return 0;
+  __u16 data = ptrace(PTRACE_PEEKDATA, pid, addr, NULL);
+  return ptrace(PTRACE_POKEDATA, pid, addr, data+delta);
 }
 
 int usage(char *program_name) {
