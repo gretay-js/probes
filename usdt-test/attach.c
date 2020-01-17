@@ -4,6 +4,9 @@
 #include <errno.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 
 int main(int argc, char *argv[]) {
   size_t addr = 0x400078;
@@ -47,7 +50,7 @@ int main(int argc, char *argv[]) {
     int signum = WSTOPSIG(status);
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS, cpid, NULL, &regs);
-    printf ("signal: %d, eip: 0x%08lx\n", signum, regs.rip);
+    printf ("signal: %d, eip: 0x%08llx\n", signum, regs.rip);
     return status;
   }
   return 0;
