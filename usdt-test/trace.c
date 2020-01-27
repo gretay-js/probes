@@ -8,8 +8,21 @@
 #include <sys/wait.h>
 
 int main(int argc, char *argv[]) {
-  char *app_filename = "./t.exe";
-  size_t addr = 0x400078;
+  unsigned long addr;
+  if(argc<3) {
+    fprintf(stderr,
+            "Missing arguments.\n\
+             Usage: trace %s <hex-addr-to-rewrite> <prog.exe> <arg> <arg> ...\n",
+            argv[0]
+            );
+    return 1;
+  }
+  if (sscanf(argv[1], "%lx", &addr) != 1) {
+    fprintf(stderr, "Cannot read hexadecimal address to rewrite %s\n", argv[1]);
+    return 1;
+  };
+
+  char *app_filename = argv[2];
   pid_t cpid = fork();
   if(cpid==-1) {
     fprintf(stderr, "error doing fork\n");
@@ -20,7 +33,10 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "ptrace traceme error\n");
       return 1;
     }
-    execl(app_filename, app_filename, NULL);
+    int i = 2;
+    for (; i < argc; i++) argv[i-2] = argv[i];
+    argv[i-2] = NULL;
+    execv(app_filename, argv);
     fprintf(stderr, "error running exec\n");
     return 1;
   }
@@ -32,10 +48,10 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  int data = ptrace(PTRACE_PEEKTEXT, cpid, addr, NULL);
-  fprintf (stderr, "%x\n", data);
+  unsigned long data = ptrace(PTRACE_PEEKTEXT, cpid, addr, NULL);
+  fprintf (stderr, "%lx\n", data);
   data = (data & ~0xff) | 0xe8;
-  fprintf (stderr, "%x\n", data);
+  fprintf (stderr, "%lx\n", data);
   ptrace(PTRACE_POKETEXT, cpid, addr, data);
 
   if(ptrace(PTRACE_CONT, cpid, NULL, NULL)==-1) {

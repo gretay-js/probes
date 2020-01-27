@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   };
 
   if (sscanf(argv[2], "%lx", &addr) != 1) {
-    fprintf(stderr, "Cannot read hexadecimal address to rewrite %s\n", argv[1]);
+    fprintf(stderr, "Cannot read hexadecimal address to rewrite %s\n", argv[2]);
     return 1;
   };
 
@@ -42,14 +42,14 @@ int main(int argc, char *argv[]) {
   }
 
   fprintf(stderr, "Modifying address %lx in running process %d\n", addr, cpid);
-  unsigned int data = ptrace(PTRACE_PEEKTEXT, cpid, addr, NULL);
-  fprintf (stderr, "before: %x\n", data);
+  unsigned long data = ptrace(PTRACE_PEEKTEXT, cpid, addr, NULL);
+  fprintf (stderr, "before: %lx\n", data);
   if ((data & 0xff) != 0x3d) {
-    fprintf(stderr, "Unexpected instruction! %x\n", (data & 0xff));
+    fprintf(stderr, "Unexpected instruction! %lx\n", (data & 0xff));
     return 1;
   }
   data = (data & ~0xff) | 0xe8;
-  fprintf (stderr, "after:  %x\n", data);
+  fprintf (stderr, "after:  %lx\n", data);
   ptrace(PTRACE_POKETEXT, cpid, addr, data);
 
   if(ptrace(PTRACE_CONT, cpid, NULL, NULL)==-1) {
