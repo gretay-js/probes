@@ -52,7 +52,7 @@ int modify_semaphore(pid_t cpid, int delta, size_t addr) {
 }
 
 int main(int argc, char *argv[]) {
-  int stay_attached = 0;
+  int stay_attached = 1;
   unsigned long addr = 0;
   if(argc<3) {
     fprintf(stderr,
@@ -112,12 +112,6 @@ It's possible to specify <addr> as hex, for example: 0x423512.\n",
   }
 
 
-  if (stay_attached) {
-      if (ptrace(PTRACE_SETOPTIONS, cpid, 0, PTRACE_O_EXITKILL)) {
-        fprintf(stderr, "cannot jail %d\n", status);
-      }
-  }
-
   int enable = true;
   if (addr == 0) {
     fprintf(stderr, "Enabling all probes specified in elf notes\n");
@@ -147,22 +141,40 @@ It's possible to specify <addr> as hex, for example: 0x423512.\n",
   }
 
   if (stay_attached) {
+    if (ptrace(PTRACE_SETOPTIONS, cpid, 0, PTRACE_O_EXITKILL)) {
+        fprintf(stderr, "cannot jail %d\n", cpid);
+    }
+
     errno = 0;
     if(ptrace(PTRACE_CONT, cpid, NULL, NULL)==-1) {
       fprintf(stderr, "could not continue, errno=%d\n", errno);
       goto signal_and_error;
     }
 
-    wait(&status);
-    if(!WIFEXITED(status)) {
-      fprintf(stderr, "child did not exit\n");
+    status = 0;
+    do {
+      waitpid(cpid, &status, 0);
+      if(WIFEXITED(status)) {
+        fprintf(stderr, "child %d exited, status=%d\n", cpid, WEXITSTATUS(status));
+      } else if (WIFSIGNALED(status)) {
+        int signum = WTERMSIG(status);
+        printf("child %d killed by signal %d\n", cpid, signum);
+        struct user_regs_struct regs;
+        ptrace(PTRACE_GETREGS, cpid, NULL, &regs);
+        fprintf (stderr, "signal: %d, eip: 0x%08llx\n", signum, regs.rip);
+        return status;
+      } else if (WIFSTOPPED(status)) {
+        fprintf(stderr, "stopped by signal %d\n", WSTOPSIG(status));
+      } else if (WIFCONTINUED(status)) {
+        fprintf(stderr, "continued\n");
+      } else {
+        fprintf(stderr, "child did not exit or signal or continued \n");
+        struct user_regs_struct regs;
+        ptrace(PTRACE_GETREGS, cpid, NULL, &regs);
+        fprintf(stderr, "eip: 0x%08llx\n", regs.rip);
+      }
+    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
-      int signum = WSTOPSIG(status);
-      struct user_regs_struct regs;
-      ptrace(PTRACE_GETREGS, cpid, NULL, &regs);
-      fprintf (stderr, "signal: %d, eip: 0x%08llx\n", signum, regs.rip);
-      return status;
-    }
   } else {
     if (ptrace(PTRACE_DETACH, cpid, NULL, NULL)) {
       fprintf(stderr, "could not detach, errno=%d\n", errno);
