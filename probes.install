@@ -1,0 +1,21 @@
+lib: [
+  "_build/install/default/lib/probes/META"
+  "_build/install/default/lib/probes/dune-package"
+  "_build/install/default/lib/probes/lib/probes_lib.a" {"lib/probes_lib.a"}
+  "_build/install/default/lib/probes/lib/probes_lib.cma" {"lib/probes_lib.cma"}
+  "_build/install/default/lib/probes/lib/probes_lib.cmi" {"lib/probes_lib.cmi"}
+  "_build/install/default/lib/probes/lib/probes_lib.cmt" {"lib/probes_lib.cmt"}
+  "_build/install/default/lib/probes/lib/probes_lib.cmti" {"lib/probes_lib.cmti"}
+  "_build/install/default/lib/probes/lib/probes_lib.cmx" {"lib/probes_lib.cmx"}
+  "_build/install/default/lib/probes/lib/probes_lib.cmxa" {"lib/probes_lib.cmxa"}
+  "_build/install/default/lib/probes/lib/probes_lib.cmxs" {"lib/probes_lib.cmxs"}
+  "_build/install/default/lib/probes/lib/probes_lib.ml" {"lib/probes_lib.ml"}
+  "_build/install/default/lib/probes/lib/probes_lib.mli" {"lib/probes_lib.mli"}
+  "_build/install/default/lib/probes/opam"
+]
+bin: [
+  "_build/install/default/bin/probes"
+]
+doc: [
+  "_build/install/default/doc/probes/README.md"
+]

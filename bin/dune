@@ -1,0 +1,14 @@
+(executable
+ (name probes)
+ (public_name probes)
+ (package probes)
+ (ocamlopt_flags (:standard "-g"))
+ (libraries
+        probes_lib
+        core
+        dune-build-info
+        )
+ (preprocess (pps ppx_jane)))
+
+(alias (name DEFAULT) (deps probes.ml.pp))
+

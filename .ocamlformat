@@ -1,0 +1,12 @@
+profile = conventional
+margin = 77
+parse-docstrings = true
+wrap-comments = true
+
+break-cases = toplevel
+break-separators=after
+space-around-lists=false
+dock-collection-brackets=false
+field-space=loose
+# break-fun-decl=smart
+type-decl=sparse

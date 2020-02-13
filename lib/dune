@@ -1,0 +1,3 @@
+(library (name probes_lib) (public_name probes.lib)
+ (libraries core shexp.process)
+ (preprocess (pps ppx_jane)))
