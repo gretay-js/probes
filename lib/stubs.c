@@ -8,10 +8,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "read_note.h"
-
+#include <CAMLprim .
 
 #define CMP_OPCODE 0x3d
 #define CALL_OPCODE 0xe8
+
+static struct note_result note_result;
 
 int modify_probe(pid_t cpid, unsigned long addr, bool enable) {
   unsigned long data;
@@ -73,17 +75,8 @@ It's possible to specify <addr> as hex, for example: 0x423512.\n",
 
   char *app_filename = argv[2];
 
-  struct note_result note_result;
   if (addr == 0) {
-    if(read_notes(app_filename, &note_result)) {
-      fprintf(stderr, "could not parse probe notes\n");
-      return 1;
-    }
 
-    if(note_result.num_probes<1) {
-      fprintf(stderr, "probe notes not found\n");
-      return 1;
-    }
   }
 
   pid_t cpid = fork();
@@ -249,4 +242,31 @@ int attach(int argc, char *argv[]) {
     fprintf(stderr, "child exited\n");
   }
   return 0;
+}
+
+CAMLprim value caml_probe_trace (value argc, value argv, value prog)
+{
+
+}
+
+
+CAMLprim value caml_probe_attach (value pid, value prog)
+{
+  CAMLparam2();
+  CAMLlocal1(v_ret);
+
+  CAMLreturn(v_ret);
+}
+
+CAMLprim value caml_probe_read_notes (value filename) {
+  char *app_filename = .... filename;
+  if(read_notes(app_filename, &note_result)) {
+    fprintf(stderr, "could not parse probe notes\n");
+    return 1;
+  }
+
+  if(note_result.num_probes<1) {
+    fprintf(stderr, "no probe notes found\n");
+    return 1;
+  }
 }

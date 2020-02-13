@@ -6,7 +6,7 @@
   (names read_note stubs)
   (flags -std=c11 -I. -g -Wall))
  ;; (c_library_flags (-lblah))
- (libraries core
-            shexp.process)
+ ; (libraries core
+ ;            shexp.process)
  (preprocess (pps ppx_jane)))
 

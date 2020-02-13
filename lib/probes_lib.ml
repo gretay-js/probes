@@ -1,10 +1,14 @@
-open Core
-
 let verbose = ref false
+
+external probe_trace : string list -> int = "caml_probe_trace"
+
+external probe_attach : int -> int = "caml_probe_attach"
+
+external probe_read_notes : string -> unit = "caml_probe_read_notes"
 
 type t =
   { pid : int;
-    prog : Filename.t;
+    prog : string;
     bpf : bool
   }
 
@@ -22,10 +26,14 @@ let user_error fmt =
     Format.err_formatter
     ("@?Error: " ^^ fmt ^^ "@.")
 
+let create ~filename ~bpf =
+  if bpf then user_error "Not implemented";
+  { pid = None; prog = filename; bpf }
+
 let attach ~prog ~pid ~bpf =
   if !verbose then
     printf "attach to pid %d and update probes in %s\n" pid prog;
-  if bpf then user_error "Not implemented";
+
   { pid; prog; bpf }
 
 let start ~prog ~args ~bpf =
