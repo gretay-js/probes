@@ -1,5 +1,5 @@
-(lang dune 1.10)
-(using fmt 1.1)
+(lang dune 2.0)
+(formatting (enabled_for dune ocaml reason))
 (name probes)
 (version 0.0.1)
 

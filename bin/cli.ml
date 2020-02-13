@@ -1,26 +1,17 @@
 open Core
 
-let verbose = ref false
+let set_verbose v = Probes_lib.verbose := v
 
-let set_verbose v = verbose := v
+let attach ~pid ~prog ~bpf =
+  Probes_lib.(
+    attach ~prog ~pid ~bpf |> update ~actions:(All Enable) |> detach)
+
+let trace ~prog ~args ~bpf =
+  Probes_lib.(
+    start ~prog ~args ~bpf |> update ~actions:(All Enable) |> detach)
 
 (* CR gyorsh: more than once -enable -disable flags *)
 (* CR gyorsh: read from file what to enable and disable *)
-
-(* type support = Bpf | Ocaml
- * let flag_bpf =
- *   let of_string = function
- *     | "bpf" -> Bpf
- *     | "ocaml" -> Ocaml
- *     | _ -> failwith "unknown argument"
- *   in
- *   Command.Param.(
- *     flag "-support" (optional_with_default Ocaml
- *                    (Command.Arg_type.create of_string))
- *       ~doc:"tracing supprt:\n\
- *             ocaml \tuser-space tracing with OCaml handlers (default)\n\
- *             bpf \tkernel-space tracing using a predefined eBPF handler, requires setuid\n\
- *             \t\t NOT IMPLEMENTED") *)
 
 (* let flag_enable_all =
  *     flag "-enable-all" no_arg ~doc:" enable all probes"
@@ -74,6 +65,13 @@ let set_verbose v = verbose := v
  *     [flag_enable_all; flag_disable_all; flag_selected]
  *     ~if_nothing_chosen:(Default_to (All Enable)) *)
 
+let flag_bpf =
+  Command.Param.(
+    flag "-bpf" no_arg
+      ~doc:
+        " kernel-space tracing using a predefined eBPF handler (requires \
+         setuid)")
+
 let flag_v =
   Command.Param.(
     flag "-verbose" ~aliases:["-v"] no_arg
@@ -100,16 +98,18 @@ let attach_command =
     ~summary:
       "Attach to a running process and enable/disable specified probes"
     ~readme:(fun () ->
-      "The command returns after updating the probes, letting the process \
-       continue normally.")
+      "After updating the probes, detach from the process and return,\n\
+       letting the process continue normally.\n\
+       If '-bpf' is specified, detaching TBD.")
     Command.Let_syntax.(
       let%map v = flag_v
       and q = flag_q
       and prog = flag_prog
-      and pid = flag_pid in
+      and pid = flag_pid
+      and bpf = flag_bpf in
       if v then set_verbose true;
       if q then set_verbose false;
-      fun () -> printf "attach to pid %d and update probes in %s" pid prog)
+      fun () -> attach ~pid ~prog ~bpf)
 
 let trace_command =
   Command.basic
@@ -118,9 +118,10 @@ let trace_command =
       "Guarantees that all specified probes are enabled before the program \
        starts.\n\
        Start execution of the program in a separate child process with \n\
-       probes enabled as specified, and detach from it. \n\
-       The command returns while the child process continues program \
-       execution normally.\n\
+       probes enabled as specified. \n\
+       Then, detach from the child process and return, while the child \
+       process continues program execution normally.\n\
+       If '-bpf' is specified, detaching is TBD.\n\
        User can call 'attach' on the running process to enable/disable \
        probes again. \n\
        The need for 'trace' command arises when tracing probes right at the \
@@ -132,13 +133,15 @@ let trace_command =
       let%map v = flag_v
       and q = flag_q
       and prog = flag_prog
+      and bpf = flag_bpf
       and args =
         Command.Param.(
           flag "--" escape ~doc:"args pass the rest to the program")
       in
+      let args = Option.value ~default:[] args in
       if v then set_verbose true;
       if q then set_verbose false;
-      fun () -> printf !"trace %s %{sexp:string list option}\n" prog args)
+      fun () -> trace ~prog ~args ~bpf)
 
 let main_command =
   Command.group

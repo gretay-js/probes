@@ -1,3 +1,12 @@
-(library (name probes_lib) (public_name probes.lib)
- (libraries core shexp.process)
+(library
+ (name probes_lib)
+ (public_name probes.lib)
+ (foreign_stubs
+  (language c)
+  (names read_note stubs)
+  (flags -std=c11 -I. -g -Wall))
+ ;; (c_library_flags (-lblah))
+ (libraries core
+            shexp.process)
  (preprocess (pps ppx_jane)))
+
