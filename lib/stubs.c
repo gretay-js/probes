@@ -13,7 +13,18 @@
 #define CMP_OPCODE 0x3d
 #define CALL_OPCODE 0xe8
 
-static struct note_result note_result;
+void raise_error(char * msg)
+{
+  DEBUG(fprintf(stderr, msg);)
+  caml_raise_with_string(*caml_named_value("caml_probes_lib_stub_exception"),
+                         msg);
+}
+
+void signal_and_error(pid_t cpid, char * msg) {
+  ptrace(PTRACE_KILL, cpid, NULL, NULL);
+  wait(NULL);
+  raise_error(msg);
+}
 
 int modify_probe(pid_t cpid, unsigned long addr, bool enable) {
   unsigned long data;
@@ -54,57 +65,6 @@ int modify_semaphore(pid_t cpid, int delta, size_t addr) {
 }
 
 int trace(int argc, char *argv[]) {
-  int stay_attached = 1;
-  unsigned long addr = 0;
-  if(argc<3) {
-    fprintf(stderr,
-"Missing arguments.\n\
-Usage: trace %s <addr> <prog.exe> <arg> <arg> ...\n\n\
-If <addr> is 0, read probe descriptions from elf notes,\n       \
-enable all probes and update their semaphores.\n\
-Othewise, rewrite instruction at <addr>, without reading elf notes.\n\
-It's possible to specify <addr> as hex, for example: 0x423512.\n",
-            argv[0]
-            );
-    return 1;
-  }
-  if (sscanf(argv[1], "%lx", &addr) != 1) {
-    fprintf(stderr, "Cannot read hexadecimal address to rewrite %s\n", argv[1]);
-    return 1;
-  };
-
-  char *app_filename = argv[2];
-
-  if (addr == 0) {
-
-  }
-
-  pid_t cpid = fork();
-  if(cpid==-1) {
-    fprintf(stderr, "error doing fork\n");
-    return 1;
-  }
-  if(cpid==0) {
-    if(ptrace(PTRACE_TRACEME, 0, NULL, NULL)) {
-      fprintf(stderr, "ptrace traceme error\n");
-      return 1;
-    }
-    int i = 2;
-    for (; i < argc; i++) argv[i-2] = argv[i];
-    argv[i-2] = NULL;
-    execv(app_filename, argv);
-    fprintf(stderr, "error running exec\n");
-    return 1;
-  }
-
-  int status = 0;
-  wait(&status);
-  if(!WIFSTOPPED(status)) {
-    fprintf(stderr, "not stopped %d\n", status);
-    goto signal_and_error;
-  }
-
-
   int enable = true;
   if (addr == 0) {
     fprintf(stderr, "Enabling all probes specified in elf notes\n");
@@ -181,38 +141,7 @@ It's possible to specify <addr> as hex, for example: 0x423512.\n",
   return 1;
 }
 
-int attach(int argc, char *argv[]) {
-  unsigned long addr;
-  pid_t cpid = -1; // pid to attach ptrace to
-  if(argc!=3) {
-    fprintf(stderr,
-            "Missing arguments.\n\
-             Usage: attach %s <pid> <hex-addr-to-rewrite>\n",
-            argv[0]
-            );
-    return 1;
-  }
-  if (sscanf(argv[1], "%d", &cpid) != 1) {
-    fprintf(stderr, "Cannot read pid %s\n", argv[1]);
-    return 1;
-  };
-
-  if (sscanf(argv[2], "%lx", &addr) != 1) {
-    fprintf(stderr, "Cannot read hexadecimal address to rewrite %s\n", argv[2]);
-    return 1;
-  };
-
-  if(ptrace(PTRACE_ATTACH, cpid, NULL, NULL)) {
-    fprintf(stderr, "ptrace attach error\n");
-    return 1;
-  }
-
-  int status = 0;
-  pid_t res = waitpid(cpid, &status, WUNTRACED);
-  if ((res != cpid) || !(WIFSTOPPED(status)) ) {
-    printf("Unexpected wait result res %d stat %x\n",res,status);
-    exit(1);
-  }
+int update(pid_t cpid) {
 
   fprintf(stderr, "Modifying address %lx in running process %d\n", addr, cpid);
   unsigned long data = ptrace(PTRACE_PEEKTEXT, cpid, addr, NULL);
@@ -244,29 +173,86 @@ int attach(int argc, char *argv[]) {
   return 0;
 }
 
-CAMLprim value caml_probe_trace (value argc, value argv, value prog)
-{
+pid_t start (char **argv) {
+  pid_t cpid = fork();
+  if(cpid==-1) {
+    raise_error("error doing fork\n");
+  }
 
+  if(cpid==0) {
+    if(ptrace(PTRACE_TRACEME, 0, NULL, NULL)) {
+      raise_error("ptrace traceme error\n");
+    }
+    execv(argv[0], argv);
+    raise_error("error running exec\n");
+  }
+
+  int status = 0;
+  wait(&status);
+  if(!WIFSTOPPED(status)) {
+    signal_and_error(cpid, sprintf("not stopped %d\n", status));
+  }
+}
+
+CAMLprim value caml_probes_lib_start (value v_argv)
+{
+  CAMLparam1(v_argv);
+  int argc = Wosize_val(v_argv);
+
+  if (argc < 1) {
+    raise_error("Missing executable name\n");
+  }
+  int size = Wosize_val(arg);
+  const char ** argv =
+    (const char **) caml_stat_alloc((argc + 1 /* for NULL */)
+                                    * sizeof(const char *));
+  for (i = 0; i < argc; i++) argv[i] = String_val(Field(v_argv, i));
+  argv[argc] = NULL;
+
+  pid_t cpid = start(argv);
+
+  caml_stat_free argv;
+  CAMLreturn(Val_long(cpid));
 }
 
 
-CAMLprim value caml_probe_attach (value pid, value prog)
+CAMLprim value caml_probes_lib_attach (value v_pid)
 {
-  CAMLparam2();
-  CAMLlocal1(v_ret);
+  pid_t cpid = Long_val(v_pid);
+  if(ptrace(PTRACE_ATTACH, cpid, NULL, NULL)) {
+    raise_error(sprintf ("ptrace attach %d error\n" cpid));
+  }
 
-  CAMLreturn(v_ret);
+  int status = 0;
+  pid_t res = waitpid(cpid, &status, WUNTRACED);
+  if ((res != cpid) || !(WIFSTOPPED(status)) ) {
+    raise_error (sprintf("Unexpected wait result res %d stat %x\n",res,status));
+  }
+  return Val_unit;
 }
 
-CAMLprim value caml_probe_read_notes (value filename) {
-  char *app_filename = .... filename;
-  if(read_notes(app_filename, &note_result)) {
-    fprintf(stderr, "could not parse probe notes\n");
-    return 1;
+CAMLprim value caml_probes_lib_read_notes (value v_filename) {
+  struct note_result note_result;
+  char *filename = String_val(v_filename);
+  if(read_notes(filename, &note_result)) {
+    raise_error (sprintf ("could not parse probe notes from %s\n" filename));
   }
 
-  if(note_result.num_probes<1) {
-    fprintf(stderr, "no probe notes found\n");
-    return 1;
+  alloc_custom
+  caml_alloc_array (caml_copy_string, argv)
+../
+}
+
+CAMLprim value caml_probes_lib_get_names (value v_filename) {
+  // last entry in result->probe_notes array is null, for creating an ocaml array
+  result->probe_notes[num_notes] = NULL;
+}
+
+CAMLprim value caml_probes_lib_detach (value v_pid)
+{
+  pid_t cpid = Long_val(v_pid);
+  if (ptrace(PTRACE_DETACH, cpid, NULL, NULL)) {
+    raise_error (sprintf ("could not detach, errno=%d\n", errno));
   }
+  return Val_unit;
 }

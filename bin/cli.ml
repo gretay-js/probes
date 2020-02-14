@@ -1,21 +1,6 @@
 open Core
-module P = Probe_lib
 
 let set_verbose v = Probes_lib.verbose := v
-
-let attach ~pid ~prog ~bpf =
-  let t = P.create ~filename:prog ~bpf in
-  P.attach t ~pid;
-  P.update t ~actions:(All Enable);
-  P.detach t;
-  ()
-
-let trace ~prog ~args ~bpf =
-  let t = P.create ~filename:prog ~bpf in
-  P.start t prog :: args;
-  P.update t ~actions:(All Enable);
-  P.detach t;
-  ()
 
 (* CR gyorsh: more than once -enable -disable flags *)
 (* CR gyorsh: read from file what to enable and disable *)
@@ -111,12 +96,11 @@ let attach_command =
     Command.Let_syntax.(
       let%map v = flag_v
       and q = flag_q
-      and prog = flag_prog
       and pid = flag_pid
       and bpf = flag_bpf in
       if v then set_verbose true;
       if q then set_verbose false;
-      fun () -> attach ~pid ~prog ~bpf)
+      fun () -> Main.attach ~pid ~bpf)
 
 let trace_command =
   Command.basic
@@ -148,7 +132,7 @@ let trace_command =
       let args = Option.value ~default:[] args in
       if v then set_verbose true;
       if q then set_verbose false;
-      fun () -> trace ~prog ~args ~bpf)
+      fun () -> Main.trace ~prog ~args ~bpf)
 
 let main_command =
   Command.group

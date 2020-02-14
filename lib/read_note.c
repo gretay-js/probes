@@ -154,7 +154,7 @@ int read_notes(char *filename, struct note_result *result) {
   size_t offset = 0;
   struct probe_note *notes[100];
   size_t num_notes = 0;
-  while(offset < ms.stapsdt.size && num_notes<100) {
+  while(offset < ms.stapsdt.size) {
     int owner_size = *(int*)data;
     int data_size = *(int*)(data+4);
     int type = *(int*)(data+8);
@@ -208,7 +208,7 @@ int read_notes(char *filename, struct note_result *result) {
     }
   }
   result->num_probes = num_notes;
-  result->probe_notes = malloc(sizeof(struct probe_note*) * num_notes);
+  result->probe_notes = malloc(sizeof(struct probe_note*) * (num_notes+1));
   if(!result->probe_notes) {
     fprintf(stderr, "could not alloc probe note pointers\n");
     goto error2;
