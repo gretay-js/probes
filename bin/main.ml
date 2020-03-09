@@ -9,19 +9,17 @@ let info ~pid ~bpf =
       printf "%s %s\n" p.name (if p.enabled then "enabled" else "disabled"));
   P.detach t
 
-let actions = P.All P.Enable
-
-let attach ~pid ~bpf =
+let attach_fast ~pid ~bpf ~enable =
   let prog = P.get_exe pid in
   let t = P.create ~prog ~bpf in
-  P.attach t pid ~check_prog:false;
-  P.update t ~actions;
-  P.detach t;
+  P.attach_and_set_all t pid ~enable;
   ()
 
-let trace ~prog ~args ~bpf =
+let trace_fast ~prog ~args ~bpf =
   let t = P.create ~prog ~bpf in
-  P.start t ~prog ~args ~check_prog:false;
-  P.update t ~actions;
-  P.detach t;
+  P.trace_all t ~prog ~args;
   ()
+
+let trace = trace_fast
+
+let attach = attach_fast

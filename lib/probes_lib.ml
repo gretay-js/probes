@@ -33,6 +33,15 @@ external stub_set_all : internal -> pid -> enable:bool -> unit
 external stub_set_one : internal -> pid -> name:string -> enable:bool -> unit
   = "caml_probes_lib_update"
 
+external stub_with_pid_set_all : internal -> pid -> enable:unit -> unit
+  = "caml_probes_lib_with_pid_set_all"
+
+external stub_trace_all : internal -> args:string list -> enable:unit -> unit
+  = "caml_probes_lib_with_pid_set_all"
+
+external stub_with_pid_get_states : pid -> -> unit
+  = "caml_probes_lib_with_pid_get_states"
+
 type probe_desc =
   { name : string;
     enabled : bool
@@ -164,3 +173,20 @@ let detach t =
       t.pid <- Not_attached
 
 let get_probe_names t = t.probe_names
+
+
+let trace_all t =
+  match t.pid with
+  | Attached existing_pid ->  raise (Error (sprintf "trace_all: already attached to %d \n" existing_pid))
+  | Not_attached -> stub_trace_all t.internal
+
+val attach_and_set_all t pid enable =
+  match t.pid with
+  | Attached existing_pid ->  raise (Error (sprintf "trace_all: already attached to %d \n" existing_pid))
+  | Not_attached -> stub_with_pid_set_all t.internal pid ~enable
+
+
+let get_pig t =
+  match t.pid with
+  | Not_attached -> None
+  | Some pid -> pid

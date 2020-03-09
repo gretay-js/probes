@@ -63,6 +63,14 @@ val detach : t -> unit
     of detaching is that it allows another tool such as gdb to attach. Only
     one parent can be attached at any give time. *)
 
+val trace_all : t -> unit
+(** equivalent to [start . update (All Enable) . detach] but only one C call
+    and no allocation on ocaml heap. *)
+
+val attach_and_set_all : t -> pid -> enable:bool -> unit
+(** equivalent to [attach pid . update (All enable) . detach pid] but only
+    one C call and no allocation on ocaml heap. *)
+
 val verbose : bool ref
 
 val get_probe_names : t -> string array
@@ -79,3 +87,5 @@ val get_probe_states : t -> probe_desc array
 val get_exe : pid -> string
 (** Utility to get the name of the binary executed by proces [pid]. Read from
     /proc/pid/exe *)
+
+val get_pid : t -> pid option

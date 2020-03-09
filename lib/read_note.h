@@ -18,20 +18,11 @@ struct probe_note {
   struct argument *args;
 };
 
-struct note_result {
+struct probe_notes {
   size_t num_probes;
   struct probe_note **probe_notes;
 };
 
-int read_notes(char *file, struct note_result *result);
+int read_notes(char *file, struct probe_notes *result);
 
 // CR rcummings: need functions to conveniently free these structs
-
-struct notes {
-  char *name;
-  size_t offset;
-  size_t semaphore;
-  int num_args;
-  struct argument *args;
-};
-probe_note

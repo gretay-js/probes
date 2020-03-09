@@ -8,7 +8,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "read_note.h"
-#include <CAMLprim .
+
+#define CAML_NAME_SPACE
+#include <caml/mlvalues.h>
+#include <caml/memory.h>
+#include <caml/alloc.h>
+#include <caml/custom.h>
+
 
 #define CMP_OPCODE 0x3d
 #define CALL_OPCODE 0xe8
@@ -194,15 +200,26 @@ pid_t start (char **argv) {
   }
 }
 
+
+void detatch (pid_t cpid) {
+  if(ptrace(PTRACE_CONT, cpid, NULL, NULL)==-1) {
+    signal_and_error(cpid,
+                     sprintf("could not continue, errno=%d\n", errno));
+  }
+  if (ptrace(PTRACE_DETACH, cpid, NULL, NULL)) {
+    signal_and_error(cpid,
+                     sprintf ("could not detach %d, errno=%d\n", cpid, errno);
+  }
+}
+
 CAMLprim value caml_probes_lib_start (value v_argv)
 {
-  CAMLparam1(v_argv);
+  CAMLparam1(v_argv); /* string list */
   int argc = Wosize_val(v_argv);
 
   if (argc < 1) {
     raise_error("Missing executable name\n");
   }
-  int size = Wosize_val(arg);
   const char ** argv =
     (const char **) caml_stat_alloc((argc + 1 /* for NULL */)
                                     * sizeof(const char *));
@@ -220,7 +237,7 @@ CAMLprim value caml_probes_lib_attach (value v_pid)
 {
   pid_t cpid = Long_val(v_pid);
   if(ptrace(PTRACE_ATTACH, cpid, NULL, NULL)) {
-    raise_error(sprintf ("ptrace attach %d error\n" cpid));
+    raise_error(sprintf ("ptrace attach %d, error=%d\n" cpid, errno));
   }
 
   int status = 0;
@@ -231,16 +248,41 @@ CAMLprim value caml_probes_lib_attach (value v_pid)
   return Val_unit;
 }
 
+CAMLprim value caml_probes_lib_detach (value v_pid)
+{
+  pid_t cpid = Long_val(v_pid);
+  detach cpid;
+  return Val_unit;
+}
+
+/* Encapsulation of probe notes as OCaml custom blocks. */
+static struct custom_operations probe_notes_ops = {
+  "com.janestreet.ocaml.probes",
+  custom_finalize_default,
+  custom_compare_default,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default,
+  custom_compare_ext_default,
+  custom_fixed_length_default
+};
+
+/* Accessing the note part of an OCaml custom block */
+#define Probe_notes_val(v) (*((probe_notes **) Data_custom_val(v)))
+
 CAMLprim value caml_probes_lib_read_notes (value v_filename) {
-  struct note_result note_result;
+  CAMLparam1(v_filename);
   char *filename = String_val(v_filename);
-  if(read_notes(filename, &note_result)) {
+
+  struct probe_notes *res = malloc(sizeof(struct probe_notes));
+  if(read_notes(filename, res)) {
     raise_error (sprintf ("could not parse probe notes from %s\n" filename));
   }
 
-  alloc_custom
-  caml_alloc_array (caml_copy_string, argv)
-../
+  /* Allocating an OCaml custom block to hold the notes */
+  value internal = caml_alloc_custom(&probe_notes_ops, sizeof(probe_notes *), 0, 1);
+  Probe_notes_val(internal) = res;
+  return internal;
 }
 
 CAMLprim value caml_probes_lib_get_names (value v_filename) {
@@ -248,11 +290,9 @@ CAMLprim value caml_probes_lib_get_names (value v_filename) {
   result->probe_notes[num_notes] = NULL;
 }
 
-CAMLprim value caml_probes_lib_detach (value v_pid)
+CAMLprim value caml_probes_lib_attach_update_detach (value v_pid)
 {
   pid_t cpid = Long_val(v_pid);
-  if (ptrace(PTRACE_DETACH, cpid, NULL, NULL)) {
-    raise_error (sprintf ("could not detach, errno=%d\n", errno));
-  }
+
   return Val_unit;
 }

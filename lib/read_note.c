@@ -122,7 +122,7 @@ int parse_arguments(struct probe_note *note, char *argstring) {
   return 0;
 }
 
-int read_notes(char *filename, struct note_result *result) {
+int read_notes(char *filename, struct probe_notes *result) {
   struct whole_elf whole_elf =
     { .size = 0,
       .data = NULL,

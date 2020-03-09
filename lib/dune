@@ -6,4 +6,3 @@
   (names read_note stubs)
   (flags -std=c11 -I. -g -Wall))
  )
-

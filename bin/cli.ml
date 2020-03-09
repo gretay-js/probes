@@ -73,6 +73,37 @@ let flag_q =
   Command.Param.(
     flag "-quiet" ~aliases:["-q"] no_arg ~doc:" don't print anything")
 
+let flag_enable_all =
+  let open Command.Param in
+  let flag_enable =
+    Command.Param.(flag "-enable" no_arg ~doc:" enable all probes")
+
+let flag_disable =
+  Command.Param.(flag "-disable" no_arg ~doc:" disable all probes")
+
+
+let flag_actions =
+  let open Command.Param in
+
+  let flag_selected =
+    Command.Let_syntax.(
+      let%map enable = flag_enable
+      and disable = flag_disable
+      in
+      (Selected (Option.both enable @ disable)))
+  in
+  let flag_selected =
+    flag "-enable" arg_string
+      ~doc:" use md5 per compilation unit only to detect source changes"
+    |> map ~f:(function
+      | true -> Some (Crcs.Config.mk ~func:false ~unit:true)
+      | false -> None)
+  in
+  choose_one
+    [flag_enable_all; flag_disable_all; flag_selected]
+    ~if_nothing_chosen:(Default_to (All Enable)) *)
+
+
 (* CR gyorsh: the functionality for bpf is in, but the command line interface
    isn't implemented yet. Requires setuid privilleages on this tool to run. *)
 
