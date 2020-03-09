@@ -102,6 +102,17 @@ let attach_command =
       if q then set_verbose false;
       fun () -> Main.attach ~pid ~bpf)
 
+let info_command =
+  Command.basic
+    ~summary:
+      "Attach to a running process and print for each probe if it is \
+       enabled/disabled"
+    Command.Let_syntax.(
+      let%map v = flag_v and q = flag_q and pid = flag_pid in
+      if v then set_verbose true;
+      if q then set_verbose false;
+      fun () -> Main.info ~pid)
+
 let trace_command =
   Command.basic
     ~summary:"Execute the program with probes enabled as specified"
@@ -137,7 +148,9 @@ let trace_command =
 let main_command =
   Command.group
     ~summary:"Statically-defined probes for tracing native OCaml programs"
-    [("trace", trace_command); ("attach", attach_command)]
+    [ ("trace", trace_command);
+      ("attach", attach_command);
+      ("info", info_command) ]
 
 let run ?version ?build_info () =
   set_verbose false;

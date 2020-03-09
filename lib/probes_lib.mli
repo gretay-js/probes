@@ -1,58 +1,79 @@
 type t
-(** Mutable representation of probes in the traced program *)
-(** Not thread safe. Use with only one tracer thread. *)
+(** Mutable representation of probes in the traced program. Not thread safe.
+    Use with only one tracer thread. *)
+
+(* A simple state machine checks that the process is stopped before trying to
+   update the probes:
+
+   (start | attach) . (update | get_probe_names | get_status )* . detach
+
+   (attach . (update | get_probe_names | get_status )* . detach)*
+
+   Not known *)
 
 exception Error of string
 
-type state =
-  | Enabled
-  | Disabled
-  | Unknown
-
 type probe_desc =
   { name : string;
-    state : state
+    enabled : bool
   }
 
 type action =
   | Enable
   | Disable
-  | Toggle
-  | Skip
 
 type actions =
   | All of action
   | Selected of (action * string) list
 
-val attach : t -> pid:int -> check_prog:bool -> unit
-(** Attach to the process with [pid], and stop it to allow probe update.
-    If [check_prog] is true, ensures that
-    [get_prog pid] and the program name used to construct [t] match,
-    before trying to attach.
-*)
-
-val start : t -> prog:string -> args:string list -> check_prog:bool -> unit
-(** Execute the program using ptrace, but stop the process to update the probes.
-    If [check_prog] is true, ensure that prog and [t] match.
-*)
-
-val update_and_detach : t -> actions:actions -> unit
-(** Enable/disable probes, continue the process, *)
-
-val verbose : bool ref
-
-val create : prog:string ->  bpf:bool -> t
+val create : prog:string -> bpf:bool -> t
 (** Reads the entire elf binary [prog] and extracts probes descriptions from
     its stapstd .notes section. Memory and time are linear in the size of the
     binary, so can be slow for large binaries. Does not require the program
     to be running. *)
 
-val get_probe_names : t -> probe_desc array
-(** Returns probe description  *)
+val attach : t -> pid:int -> check_prog:bool -> unit
+(** Attach to the process with [pid], and stop it to allow probe update. If
+    [check_prog] is true, raise if [get_exe pid] and the program name used to
+    construct [t] do not match. *)
 
-val get_status_probes : t -> probe_desc array
-(** Check the current process which probes are enabled. *)
+val start : t -> prog:string -> args:string list -> check_prog:bool -> unit
+(** Execute the program using ptrace, but stop the process to update the
+    probes. If [check_prog] is true, rause if prog and [t] do not match. *)
 
-val prog : pid:int -> string
+val update : t -> actions:actions -> unit
+(** Enable/disable probes. Raise if not attached to any process. [update]
+    writes to memory of the process that must have been already stopped by
+    [attached] or [start]. [update] does not continue proces execution and
+    can be invoked more than once. Invoke [detach] to continue process
+    execution after all updates are done. *)
+
+val detach : t -> unit
+(** Let the process continue its execution and detaches from it.
+
+    After sending PTRACE_CONT signal to the child process, the parent needs
+    to stop the child process again to make updates to probes, and the only
+    way to stop is to send PTRACE_ATTACH. It means it is not useful to stay
+    attached after continue, because the tracer cannot do anything with the
+    probes. An alternative is to use PTRACE_SEIZE instead of PTRACE_ATTACH
+    and then explicitly interrupt to stop the process. This way the tracer
+    can remain attached to the child. (Is it required for bpf?) The advantage
+    of detaching is that it allows another tool such as gdb to attach. Only
+    one parent can be attached at any give time. *)
+
+val verbose : bool ref
+
+val get_probe_names : t -> string array
+(** Returns the names of probes available in [t]. *)
+
+val get_probe_states : t -> probe_desc array
+(** Check which probes are enabled in the current process. Raise if not
+    attached.
+
+    Reads the value of semphores in current process's memory. An alternative
+    implementation (for example, if semaphores aren't in use), could be to
+    check the instruction at the probe in the text section. *)
+
+val get_exe : pid:int -> string
 (** Utility to get the name of the binary executed by proces [pid]. Read from
     /proc/pid/exe *)

@@ -10,7 +10,7 @@
 
 (package
  (name probes)
- (synopsis "USDT probes for OCaml")
+ (synopsis "USDT probes for OCaml: command line tool")
  (description "
  User-space statically-defined tracing probes for OCaml.
 Experimental.
@@ -22,8 +22,22 @@ Copyright (c) 2019 Jane Street Group LLC.
   (dune (>= 1.8))
   core
   ppx_jane
-  shexp
  )
 )
+
+(package
+ (name probes.lib)
+ (synopsis "USDT probes for OCaml: library")
+ (description "
+ User-space statically-defined tracing probes for OCaml.
+Experimental.
+Copyright (c) 2019 Jane Street Group LLC.
+")
+ (depends
+  (ocaml (>= 4.09))
+  (dune (>= 1.8))
+ )
+)
+
 
 (generate_opam_files true)

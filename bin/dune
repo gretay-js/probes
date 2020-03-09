@@ -4,7 +4,7 @@
  (package probes)
  (ocamlopt_flags (:standard "-g"))
  (libraries
-        probes_lib
+        probes.lib
         core
         dune-build-info
         )
