@@ -13,6 +13,8 @@ type t
 
 exception Error of string
 
+type pid = int
+
 type probe_desc =
   { name : string;
     enabled : bool
@@ -32,7 +34,7 @@ val create : prog:string -> bpf:bool -> t
     binary, so can be slow for large binaries. Does not require the program
     to be running. *)
 
-val attach : t -> pid:int -> check_prog:bool -> unit
+val attach : t -> pid -> check_prog:bool -> unit
 (** Attach to the process with [pid], and stop it to allow probe update. If
     [check_prog] is true, raise if [get_exe pid] and the program name used to
     construct [t] do not match. *)
@@ -74,6 +76,6 @@ val get_probe_states : t -> probe_desc array
     implementation (for example, if semaphores aren't in use), could be to
     check the instruction at the probe in the text section. *)
 
-val get_exe : pid:int -> string
+val get_exe : pid -> string
 (** Utility to get the name of the binary executed by proces [pid]. Read from
     /proc/pid/exe *)

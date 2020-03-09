@@ -1,0 +1,8 @@
+lib: [
+  "_build/install/default/lib/probes-lib/META"
+  "_build/install/default/lib/probes-lib/dune-package"
+  "_build/install/default/lib/probes-lib/opam"
+]
+doc: [
+  "_build/install/default/doc/probes-lib/README.md"
+]

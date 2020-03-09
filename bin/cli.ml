@@ -108,10 +108,13 @@ let info_command =
       "Attach to a running process and print for each probe if it is \
        enabled/disabled"
     Command.Let_syntax.(
-      let%map v = flag_v and q = flag_q and pid = flag_pid in
+      let%map v = flag_v
+      and q = flag_q
+      and pid = flag_pid
+      and bpf = flag_bpf in
       if v then set_verbose true;
       if q then set_verbose false;
-      fun () -> Main.info ~pid)
+      fun () -> Main.info ~pid ~bpf)
 
 let trace_command =
   Command.basic

@@ -1,6 +1,6 @@
 (library
  (name probes_lib)
- (public_name probes.lib)
+ (public_name probes-lib)
  (foreign_stubs
   (language c)
   (names read_note stubs)
