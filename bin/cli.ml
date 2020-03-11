@@ -21,7 +21,7 @@ let flag_actions =
          | false -> None)
   in
   let f = function
-    | [] -> []
+    | [] -> String.Set.empty
     | sl ->
         List.map ~f:(String.split ~on:',') sl
         |> List.concat |> String.Set.of_list

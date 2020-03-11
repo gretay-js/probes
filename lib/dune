@@ -4,5 +4,5 @@
  (foreign_stubs
   (language c)
   (names read_note stubs)
-  (flags -std=c11 -I. -g -Wall))
+  (flags -O3 -std=c11 -I. -g -Wall))
  )

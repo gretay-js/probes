@@ -70,6 +70,9 @@ int modify_semaphore(pid_t cpid, int delta, size_t addr) {
   return ptrace(PTRACE_POKEDATA, cpid, addr, data);
 }
 
+int is_enabled_semaphore(pid_t, size_t semaphore) {
+
+}
 int trace(int argc, char *argv[]) {
   int enable = true;
   if (addr == 0) {
@@ -179,7 +182,8 @@ int update(pid_t cpid) {
   return 0;
 }
 
-pid_t start (char **argv) {
+/* ptrace calls, nothing specific to probes */
+static inline pid_t start (char **argv) __attribute__((always_inline)) {
   pid_t cpid = fork();
   if(cpid==-1) {
     raise_error("error doing fork\n");
@@ -200,8 +204,19 @@ pid_t start (char **argv) {
   }
 }
 
+static inline void attach (pid_t cpid) __attribute__((always_inline)) {
+  if(ptrace(PTRACE_ATTACH, cpid, NULL, NULL)) {
+    raise_error(sprintf ("ptrace attach %d, error=%d\n" cpid, errno));
+  }
 
-void detatch (pid_t cpid) {
+  int status = 0;
+  pid_t res = waitpid(cpid, &status, WUNTRACED);
+  if ((res != cpid) || !(WIFSTOPPED(status)) ) {
+    raise_error (sprintf("Unexpected wait result res %d stat %x\n",res,status));
+  }
+}
+
+static inline void detatch (pid_t cpid) __attribute__((always_inline)) {
   if(ptrace(PTRACE_CONT, cpid, NULL, NULL)==-1) {
     signal_and_error(cpid,
                      sprintf("could not continue, errno=%d\n", errno));
@@ -211,6 +226,9 @@ void detatch (pid_t cpid) {
                      sprintf ("could not detach %d, errno=%d\n", cpid, errno);
   }
 }
+
+/*  OCaml interface: manipulate ocaml values, mind the GC,
+    and call regular C functions */
 
 CAMLprim value caml_probes_lib_start (value v_argv)
 {
@@ -228,7 +246,7 @@ CAMLprim value caml_probes_lib_start (value v_argv)
 
   pid_t cpid = start(argv);
 
-  caml_stat_free argv;
+  caml_stat_free(argv);
   CAMLreturn(Val_long(cpid));
 }
 
@@ -236,22 +254,14 @@ CAMLprim value caml_probes_lib_start (value v_argv)
 CAMLprim value caml_probes_lib_attach (value v_pid)
 {
   pid_t cpid = Long_val(v_pid);
-  if(ptrace(PTRACE_ATTACH, cpid, NULL, NULL)) {
-    raise_error(sprintf ("ptrace attach %d, error=%d\n" cpid, errno));
-  }
-
-  int status = 0;
-  pid_t res = waitpid(cpid, &status, WUNTRACED);
-  if ((res != cpid) || !(WIFSTOPPED(status)) ) {
-    raise_error (sprintf("Unexpected wait result res %d stat %x\n",res,status));
-  }
+  attach(cpid);
   return Val_unit;
 }
 
 CAMLprim value caml_probes_lib_detach (value v_pid)
 {
   pid_t cpid = Long_val(v_pid);
-  detach cpid;
+  detach(cpid);
   return Val_unit;
 }
 
@@ -280,14 +290,71 @@ CAMLprim value caml_probes_lib_read_notes (value v_filename) {
   }
 
   /* Allocating an OCaml custom block to hold the notes */
-  value internal = caml_alloc_custom(&probe_notes_ops, sizeof(probe_notes *), 0, 1);
-  Probe_notes_val(internal) = res;
-  return internal;
+  value v_internal = caml_alloc_custom(&probe_notes_ops, sizeof(probe_notes *), 0, 1);
+  Probe_notes_val(v_internal) = res;
+  CAMLreturn(v_internal);
 }
 
-CAMLprim value caml_probes_lib_get_names (value v_filename) {
-  // last entry in result->probe_notes array is null, for creating an ocaml array
-  result->probe_notes[num_notes] = NULL;
+CAMLprim value caml_probes_lib_get_names (value v_internal) {
+  CAMLparam1(v_internal);
+  CAMLlocal2(v_names, v_name);
+
+  struct probe_notes *notes = Probe_notes_val(v_internal);
+  size_t n = notes->num_notes;
+  v_names = caml_alloc(n,0);
+  for (int i = 0; i < n; i++) {
+    v_name = caml_copy_string(notes->probe_notes[i]->name);
+    Store_field(v_names, i, v_name);
+  }
+  CAMLreturn(v_names);
+}
+
+CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid) {
+  CAMLparam1(v_internal);
+  CAMLlocal2(v_states);
+  pid_t cpid = Long_val(v_pid);
+
+  struct probe_notes *notes = Probe_notes_val(v_internal);
+  size_t n = notes->num_notes;
+  v_states = caml_alloc(n,0);
+  int b;
+  for (int i = 0; i < n; i++) {
+    b = is_enabled_semaphore(cpid, notes->probe_notes[i]->semaphore);
+    Store_field(v_states, i, Val_bool(b));
+  }
+  CAMLreturn(v_states);
+}
+
+CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
+                                       value v_name, value v_enable) {
+  // This function doesn't allocate, but update_probe may raise
+  // we still need to register these values with the GC.
+  CAMLparam2(v_internal, v_name);
+  pid_t cpid = Long_val(v_pid);
+  int enable = Bool_val(v_enable);
+  char *name = String_val(v_name);
+  struct probe_notes *notes = Probe_notes_val(v_internal);
+  for (int i = 0; i < notes->num_notes; i++) {
+    if (!strcmp(name, notes->probe_notes[i]->name)) {
+      update_probe(cpid, notes->probe_notes[i], enable);
+    }
+  }
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value caml_probes_lib_set_all (value v_internal, value v_pid,
+                                        value v_enable) {
+  CAMLparam1(v_internal);
+  pid_t cpid = Long_val(v_pid);
+  int enable = Bool_val(v_enable);
+  const char *name = String_val(v_name);
+  struct probe_notes *notes = Probe_notes_val(v_internal);
+  for (int i = 0; i < notes->num_notes; i++) {
+    if (!strcmp(name, notes->probe_notes[i]->name)) {
+      update_probe(cpid, notes->probe_notes[i], enable);
+    }
+  }
+  CAMLreturn(Val_unit);
 }
 
 CAMLprim value caml_probes_lib_attach_update_detach (value v_pid)
