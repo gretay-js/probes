@@ -6,9 +6,7 @@
 (library
  (name probes_lib_test)
  (modules probes_lib_test)
- (ocamlopt_flags (:standard "-g"))
  (libraries probes-lib core)
  (inline_tests)
  (preprocess (pps ppx_inline_test)))
-
 
