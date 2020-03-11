@@ -12,7 +12,7 @@ type internal
 (** custom block, includes information such as probe offset, semaphore
     offset, and the location of arguments for the bpf handler.*)
 
-external stub_start : string list -> pid = "caml_probes_lib_start"
+external stub_start : argv:string list -> pid = "caml_probes_lib_start"
 
 external stub_attach : pid -> unit = "caml_probes_lib_attach"
 
@@ -33,14 +33,11 @@ external stub_set_all : internal -> pid -> enable:bool -> unit
 external stub_set_one : internal -> pid -> name:string -> enable:bool -> unit
   = "caml_probes_lib_update"
 
-external stub_with_pid_set_all : internal -> pid -> enable:unit -> unit
-  = "caml_probes_lib_with_pid_set_all"
+external stub_trace_all : internal -> argv:string list -> unit
+  = "caml_probes_lib_trace_all"
 
-external stub_trace_all : internal -> args:string list -> enable:unit -> unit
-  = "caml_probes_lib_with_pid_set_all"
-
-external stub_with_pid_get_states : pid -> -> unit
-  = "caml_probes_lib_with_pid_get_states"
+external stub_attach_set_all_detach : internal -> pid -> enable:bool -> unit
+  = "caml_probes_lib_stub_attach_set_all_detach"
 
 type probe_desc =
   { name : string;
@@ -127,7 +124,7 @@ let start t ~prog ~args ~check_prog =
            (Printf.sprintf "Cannot start %s, already attached to %d" prog
               existing_pid))
   | Not_attached ->
-      let pid = stub_start (prog :: args) in
+      let pid = stub_start ~argv:(prog :: args) in
       t.pid <- Attached pid;
       (* Update [t.pid] after stub to ensure stub didn't raise *)
       ()
@@ -138,14 +135,14 @@ let start t ~prog ~args ~check_prog =
    be modified at once array, but then we need to avoid extra allocation. *)
 (* CR-soon gyorsh: do we need a setting to configure how to respond if the
    state does not change? *)
+let enable = function
+  | Enable -> true
+  | Disable -> false
+
 let update t ~actions =
   match t.pid with
   | Not_attached -> raise (Error "update failed: no pid\n")
   | Attached pid -> (
-      let enable = function
-        | Enable -> true
-        | Disable -> false
-      in
       match actions with
       | All action -> stub_set_all t.internal pid ~enable:(enable action)
       | Selected l ->
@@ -174,19 +171,27 @@ let detach t =
 
 let get_probe_names t = t.probe_names
 
-
-let trace_all t =
-  match t.pid with
-  | Attached existing_pid ->  raise (Error (sprintf "trace_all: already attached to %d \n" existing_pid))
-  | Not_attached -> stub_trace_all t.internal
-
-val attach_and_set_all t pid enable =
-  match t.pid with
-  | Attached existing_pid ->  raise (Error (sprintf "trace_all: already attached to %d \n" existing_pid))
-  | Not_attached -> stub_with_pid_set_all t.internal pid ~enable
-
-
-let get_pig t =
+let get_pid t =
   match t.pid with
   | Not_attached -> None
-  | Some pid -> pid
+  | Attached pid -> Some pid
+
+let trace_all t ~prog ~args =
+  let argv = prog :: args in
+  match t.pid with
+  | Attached existing_pid ->
+      raise
+        (Error
+           (Printf.sprintf "trace_all %s:\n already attached to %d \n"
+              (String.concat " " argv) existing_pid))
+  | Not_attached -> stub_trace_all t.internal ~argv
+
+let attach_update_all_detach t pid ~enable =
+  match t.pid with
+  | Attached existing_pid ->
+      raise
+        (Error
+           (Printf.sprintf
+              "attach_and_set_all pid=%d: already attached to %d \n" pid
+              existing_pid))
+  | Not_attached -> stub_attach_set_all_detach t.internal pid ~enable

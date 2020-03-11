@@ -63,11 +63,11 @@ val detach : t -> unit
     of detaching is that it allows another tool such as gdb to attach. Only
     one parent can be attached at any give time. *)
 
-val trace_all : t -> unit
+val trace_all : t -> prog:string -> args:string list -> unit
 (** equivalent to [start . update (All Enable) . detach] but only one C call
     and no allocation on ocaml heap. *)
 
-val attach_and_set_all : t -> pid -> enable:bool -> unit
+val attach_update_all_detach : t -> pid -> enable:bool -> unit
 (** equivalent to [attach pid . update (All enable) . detach pid] but only
     one C call and no allocation on ocaml heap. *)
 

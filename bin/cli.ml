@@ -1,61 +1,70 @@
 open Core
+module P = Probes_lib
 
 let set_verbose v = Probes_lib.verbose := v
 
-(* CR gyorsh: more than once -enable -disable flags *)
-(* CR gyorsh: read from file what to enable and disable *)
+(* CR-someday gyorsh: read from file what to enable and disable *)
 
-(* let flag_enable_all =
- *     flag "-enable-all" no_arg ~doc:" enable all probes"
- *     |> map ~f:(function
- *       | true -> Some (All Enable)
- *       | false -> None)
- *
- * let flag_disable_all =
- *   flag "-disable-all" no_arg
- *     ~doc:" disable all probes"
- *   |> map ~f:(function
- *     | true -> Some (All Disable)
- *     | false -> None) *)
+let flag_actions =
+  let to_string = function
+    | P.Disable -> "disable"
+    | P.Enable -> "enable"
+  in
+  let open Command.Param in
+  let flag_all a =
+    let s = to_string a in
+    let name = sprintf "-%s-all" s in
+    let doc = sprintf " %s all probes" s in
+    flag name no_arg ~doc
+    |> map ~f:(function
+         | true -> Some (P.All a)
+         | false -> None)
+  in
+  let f = function
+    | [] -> []
+    | sl ->
+        List.map ~f:(String.split ~on:',') sl
+        |> List.concat |> String.Set.of_list
+  in
+  let flag_list a =
+    let s = to_string a in
+    let name = "-" ^ s in
+    let doc =
+      sprintf
+        "name %s probes specified by name (or a comma separated list of \
+         names)"
+        s
+    in
+    flag name (listed string) ~doc |> map ~f
+  in
+  let check_disjoint enable disable =
+    (* Detect when the same probe name appears twice under incompatible
+       actions Enable and Disable. *)
+    let both = String.Set.inter enable disable in
+    if not (Set.is_empty both) then
+      failwith
+        (sprintf "Probe names appear in both -enable and -disable: %s"
+           (String.concat ~sep:" " (String.Set.to_list both)))
+  in
+  let map_action a names =
+    String.Set.to_list names |> List.map ~f:(fun s -> (a, s))
+  in
+  let flag_selected =
+    Command.Let_syntax.(
+      let%map enable = flag_list P.Enable
+      and disable = flag_list P.Disable in
+      check_disjoint enable disable;
+      let actions =
+        map_action P.Enable enable @ map_action P.Disable disable
+      in
+      Some (P.Selected actions))
+  in
+  choose_one
+    [flag_all P.Enable; flag_all P.Disable; flag_selected]
+    ~if_nothing_chosen:(Default_to (P.All P.Enable))
 
-(* let flag_enable =
- *   Command.Param.(
- *     flag "-enable" (optional string)
- *       ~doc:"name enable probes specified by name (or a comma separated list of names)"
- *     |> map ~f:String.split ~sep:','
- *     |> map ~f:(List.map ~f:(fun name -> (Enable name)) list_of_names))
- *
- * let flag_disable =
- *   Command.Param.(
- *     flag "-disable" (optional string)
- *       ~doc:"name disable probes specified by name (or a comma separated list of names)"
- *     |> map ~f:(function
- *       | None -> None
- *       | Some s ->
- *         String.split ~sep:',' s
- *         |> List.map ~f:(fun name -> (Disable name)) list_of_names
- *         |> Some))
- *
- * let flag_actions =
- *   let open Command.Param in
- *
- *   let flag_selected =
- *     Command.Let_syntax.(
- *       let%map enable = flag_enable
- *       and disable = flag_disable
- *       in
- *       (Selected (Option.both enable @ disable)))
- *   in
- *   let flag_selected =
- *     flag "-enable" arg_string
- *       ~doc:" use md5 per compilation unit only to detect source changes"
- *     |> map ~f:(function
- *       | true -> Some (Crcs.Config.mk ~func:false ~unit:true)
- *       | false -> None)
- *   in
- *   choose_one
- *     [flag_enable_all; flag_disable_all; flag_selected]
- *     ~if_nothing_chosen:(Default_to (All Enable)) *)
+(* CR gyorsh: the functionality for bpf is in, but the command line interface
+   isn't implemented yet. Requires setuid privilleages on this tool to run. *)
 
 let flag_bpf =
   Command.Param.(
@@ -72,40 +81,6 @@ let flag_v =
 let flag_q =
   Command.Param.(
     flag "-quiet" ~aliases:["-q"] no_arg ~doc:" don't print anything")
-
-let flag_enable_all =
-  let open Command.Param in
-  let flag_enable =
-    Command.Param.(flag "-enable" no_arg ~doc:" enable all probes")
-
-let flag_disable =
-  Command.Param.(flag "-disable" no_arg ~doc:" disable all probes")
-
-
-let flag_actions =
-  let open Command.Param in
-
-  let flag_selected =
-    Command.Let_syntax.(
-      let%map enable = flag_enable
-      and disable = flag_disable
-      in
-      (Selected (Option.both enable @ disable)))
-  in
-  let flag_selected =
-    flag "-enable" arg_string
-      ~doc:" use md5 per compilation unit only to detect source changes"
-    |> map ~f:(function
-      | true -> Some (Crcs.Config.mk ~func:false ~unit:true)
-      | false -> None)
-  in
-  choose_one
-    [flag_enable_all; flag_disable_all; flag_selected]
-    ~if_nothing_chosen:(Default_to (All Enable)) *)
-
-
-(* CR gyorsh: the functionality for bpf is in, but the command line interface
-   isn't implemented yet. Requires setuid privilleages on this tool to run. *)
 
 let flag_prog =
   Command.Param.(
@@ -128,10 +103,11 @@ let attach_command =
       let%map v = flag_v
       and q = flag_q
       and pid = flag_pid
+      and actions = flag_actions
       and bpf = flag_bpf in
       if v then set_verbose true;
       if q then set_verbose false;
-      fun () -> Main.attach ~pid ~bpf)
+      fun () -> Main.attach ~pid ~bpf ~actions)
 
 let info_command =
   Command.basic
@@ -170,6 +146,7 @@ let trace_command =
       and q = flag_q
       and prog = flag_prog
       and bpf = flag_bpf
+      and actions = flag_actions
       and args =
         Command.Param.(
           flag "--" escape ~doc:"args pass the rest to the program")
@@ -177,7 +154,7 @@ let trace_command =
       let args = Option.value ~default:[] args in
       if v then set_verbose true;
       if q then set_verbose false;
-      fun () -> Main.trace ~prog ~args ~bpf)
+      fun () -> Main.trace ~prog ~args ~bpf ~actions)
 
 let main_command =
   Command.group
