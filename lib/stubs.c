@@ -342,22 +342,26 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
   CAMLreturn(Val_unit);
 }
 
+
+static inline void set_all (struct probe_notes *notes, pid_t cpid, int enable) {
+  for (int i = 0; i < notes->num_notes; i++) {
+      update_probe(cpid, notes->probe_notes[i], enable);
+  }
+}
+
 CAMLprim value caml_probes_lib_set_all (value v_internal, value v_pid,
                                         value v_enable) {
+  // This function doesn't allocate, but update_probe may raise
+  // we still need to register these values with the GC.
   CAMLparam1(v_internal);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
-  const char *name = String_val(v_name);
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  for (int i = 0; i < notes->num_notes; i++) {
-    if (!strcmp(name, notes->probe_notes[i]->name)) {
-      update_probe(cpid, notes->probe_notes[i], enable);
-    }
-  }
+  set_all(notes, cpid, enable);
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value caml_probes_lib_attach_update_detach (value v_pid)
+CAMLprim value caml_probes_lib_attach_set_all_detach (value v_pid)
 {
   pid_t cpid = Long_val(v_pid);
 
