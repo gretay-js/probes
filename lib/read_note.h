@@ -12,8 +12,8 @@ struct argument {
    address space randomization. */
 struct probe_note {
   char *name;
-  size_t offset;
-  size_t semaphore;
+  unsigned long offset;
+  unsigned long semaphore;
   int num_args;
   struct argument *args;
 };

@@ -1,4 +1,14 @@
+#include <unistd.h>
+#include <stdint.h>
+#include <sys/types.h>
+#if defined(__GNUC__) && defined (__ELF__)
 #include <linux/types.h>
+#elif defined (__APPLE__)
+typedef uint8_t __u8;
+typedef uint32_t __u32;
+typedef uint64_t __u64;
+#endif
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -76,7 +86,8 @@ static int get_main_sections(struct whole_elf *whole_elf,
   bool found_stapsdt = false;
   for(size_t i = 0; i<section_table.num_headers; ++i) {
     read_section_details(whole_elf, &section_table, i, &result->strings, &current);
-    if(!strcmp(current.name, ".note.stapsdt") && current.type == 7) {
+    if ((!strcmp(current.name, ".note.stapsdt") && current.type == 7) ||
+       (!strcmp(current.name, "__note_stapsdt") )) {
       result->stapsdt = current;
       if(found_stapsdt) {
         fprintf(stderr, "duplicate .note.stapsdt sections\n");
@@ -152,9 +163,19 @@ int read_notes(char *filename, struct probe_notes *result) {
   }
   char *data = section_data(&whole_elf, &ms.stapsdt);
   size_t offset = 0;
-  struct probe_note *notes[100];
+  struct probe_note **notes = NULL;
+  size_t len_notes = 0;
   size_t num_notes = 0;
   while(offset < ms.stapsdt.size) {
+    if (num_notes >= len_notes) {
+      len_notes = (len_notes == 0? 64 : len_notes * 2);
+      notes = (struct probe_note **) realloc(notes, sizeof(struct probe_note *) * len);
+      if (!notes) {
+        // we could just return what was read so far, instead of failing.
+        fprintf(stderr, "could not allocate space for all notes.\n");
+        goto error2;
+      }
+    }
     int owner_size = *(int*)data;
     int data_size = *(int*)(data+4);
     int type = *(int*)(data+8);
@@ -174,13 +195,13 @@ int read_notes(char *filename, struct probe_notes *result) {
     }
     data += 0x8;
     offset += 0x8;
-    notes[num_notes] = malloc(sizeof(struct probe_note));
-    struct probe_note *current = notes[num_notes];
-    ++num_notes;
+    struct probe_note *current = malloc(sizeof(struct probe_note));
     if(!current) {
       fprintf(stderr, "could not alloc note info\n");
       goto error2;
     }
+    notes[num_notes] = current;
+    ++num_notes;
     current->offset = *(__u64*)data;
     current->semaphore = *(__u64*)(data+0x10);
     char *provider = data+0x18;
@@ -208,7 +229,7 @@ int read_notes(char *filename, struct probe_notes *result) {
     }
   }
   result->num_probes = num_notes;
-  result->probe_notes = malloc(sizeof(struct probe_note*) * (num_notes+1));
+  result->probe_notes = malloc(sizeof(struct probe_note*) * (num_notes));
   if(!result->probe_notes) {
     fprintf(stderr, "could not alloc probe note pointers\n");
     goto error2;
@@ -216,10 +237,19 @@ int read_notes(char *filename, struct probe_notes *result) {
   for(size_t i = 0; i<num_notes; ++i) {
     result->probe_notes[i] = notes[i];
   }
+  if (notes) free(notes);
   destroy(&whole_elf);
   return 0;
  error2:
-  // CR rcummings: free a bunch of stuff
+  if (notes) {
+    for(size_t i = 0; i<num_notes; ++i) {
+      if (notes[i]) {
+        if (notes[i]->name) free(notes[i]->name);
+        free(notes[i]);
+      }
+    }
+    free(notes);
+  }
  error1:
   destroy(&whole_elf);
   return 1;

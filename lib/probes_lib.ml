@@ -37,7 +37,7 @@ external stub_trace_all : internal -> argv:string list -> unit
   = "caml_probes_lib_trace_all"
 
 external stub_attach_set_all_detach : internal -> pid -> enable:bool -> unit
-  = "caml_probes_lib_stub_attach_set_all_detach"
+  = "caml_probes_lib_attach_set_all_detach"
 
 type probe_desc =
   { name : string;
