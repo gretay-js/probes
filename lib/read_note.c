@@ -7,7 +7,6 @@
 typedef uint8_t __u8;
 typedef uint32_t __u32;
 typedef uint64_t __u64;
-#include "apples.h"
 #include <mach/mach_types.h>
 #endif
 

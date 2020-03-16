@@ -9,9 +9,127 @@
 /* #ifdef OCAML_OS_TYPE == "Unix" */
 #if defined(__GNUC__) && (defined (__ELF__))
 #include <linux/ptrace.h>
+
+static inline long ptrace_traceme()
+{ return ptrace(PTRACE_TRACEME, 0, NULL, NULL); }
+
+static inline long ptrace_attach(pid_t pid)
+{ return ptrace(PTRACE_ATTACH, pid, NULL, NULL); }
+
+/* static inline long ptrace_cont(pid_t pid) */
+/* { return ptrace(PTRACE_CONT, pid, NULL, NULL); } */
+
+static inline long ptrace_detach(pid_t pid)
+{ return ptrace(PTRACE_DETACH, pid, NULL, NULL); }
+        
+static inline long ptrace_kill(pid_t pid)
+{ return ptrace(PTRACE_KILL, pid, NULL, NULL); }
+
+static inline long ptrace_get_text(pid_t pid, void *addr)
+{ return ptrace(PTRACE_PEEKTEXT, pid, addr, NULL); }
+
+static inline long ptrace_set_text(pid_t pid, void *addr, void *data)
+{ return ptrace(PTRACE_POKETEXT, pid, addr, data); }
+
+static inline long ptrace_get_data(pid_t pid, void *addr)
+{ return ptrace(PTRACE_PEEKDATA, pid, addr, NULL); }
+
+static inline long ptrace_set_data(pid_t pid, void *addr, void *data)
+{ return ptrace(PTRACE_POKEDATA, pid, addr, data); }
+
 #elif defined(__APPLE__)
-#include "apples.h"
+
 #include <mach/mach_types.h>
+#include <mach/mach.h>
+
+static inline long ptrace_traceme()
+{ return ptrace(PT_TRACE_ME, 0, (caddr_t)1, 0); }
+
+static inline long ptrace_attach(pid_t pid)
+{ return ptrace(PT_ATTACHEXC, pid, (caddr_t)1, 0); }
+
+/* static inline long ptrace_cont(pid_t pid) */
+/* { return ptrace(PT_CONTINUE, pid, (caddr_t)1, 0); } */
+
+static inline long ptrace_detach(pid_t pid)
+{ return ptrace(PT_DETACH, pid, (caddr_t)1, 0); }
+        
+static inline long ptrace_kill(pid_t pid)
+{ return ptrace(PT_KILL, pid, (caddr_t)1, 0); }
+
+// CR-soon gyorsh: test peek/poke on mac
+static inline long get_mem(pid_t pid, void *addr, vm_prot_t prot)
+{ 
+  kern_return_t kret;
+  mach_port_t task;
+  unsigned long res;
+  pointer_t buffer;
+  uint32_t size;
+  
+  kret = task_for_pid(mach_task_self(), pid, &task);
+  if ((kret!=KERN_SUCCESS) || !MACH_PORT_VALID(task))
+    {
+      fprintf(stderr, "task_for_pid failed: %s!\n",mach_error_string(kret));
+      exit(2);
+    }
+  
+  kret = vm_protect(task, (vm_address_t) addr, sizeof (unsigned long), FALSE, prot);
+  if (kret!=KERN_SUCCESS)
+  {
+    fprintf(stderr, "vm_protect failed: %s!\n", mach_error_string(kret));
+    exit(2);
+  }
+  
+  kret = vm_read(task, (vm_address_t) addr, sizeof(unsigned long), &buffer, &size);
+  if (kret!=KERN_SUCCESS)
+  {
+    fprintf(stderr, "vm_read failed: %s!\n",mach_error_string(kret));
+    exit(2);
+  }
+  res = *((unsigned long *) buffer);
+  return res;
+}
+
+static inline long set_mem(pid_t pid, void *addr, void *data, vm_prot_t prot)
+{
+  kern_return_t kret;
+  mach_port_t task;
+  
+  kret = task_for_pid(mach_task_self(), pid, &task);
+  if ((kret!=KERN_SUCCESS) || !MACH_PORT_VALID(task))
+    {
+      fprintf(stderr, "task_for_pid failed: %s!\n",mach_error_string(kret));
+      exit(2);
+    }
+
+  kret = vm_protect(task, (vm_address_t) addr, sizeof (unsigned long), FALSE, prot);
+  if (kret!=KERN_SUCCESS)
+  {
+    fprintf(stderr, "vm_protect failed: %s!\n", mach_error_string(kret));
+    exit(2);
+  }
+  
+  kret = vm_write(task, (vm_address_t) addr, (vm_address_t) data, sizeof(unsigned long));
+  if (kret!=KERN_SUCCESS)
+  {
+    fprintf(stderr, "vm_write failed: %s!\n", mach_error_string(kret));
+    exit(2);
+  }
+  return 0;
+}
+
+static inline long ptrace_get_text(pid_t pid, void *addr)
+{ return get_mem(pid,addr, VM_PROT_READ | VM_PROT_EXECUTE); }
+
+static inline long ptrace_set_text(pid_t pid, void *addr, void *data)
+{ return set_mem(pid,addr,data,VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE); }
+
+static inline long ptrace_get_data(pid_t pid, void *addr)
+{ return get_mem(pid,addr, VM_PROT_READ); }
+
+static inline long ptrace_set_data(pid_t pid, void *addr, void *data)
+{ return set_mem(pid,addr,data,VM_PROT_READ | VM_PROT_WRITE); }
+
 #endif
 #include <sys/user.h>
 #include <sys/wait.h>
@@ -25,11 +143,7 @@
 #include <caml/alloc.h>
 #include <caml/custom.h>
 
-
-#define CMP_OPCODE 0x3d
-#define CALL_OPCODE 0xe8
-
-
+// Error handling
 #define DEBUG(stmt) stmt
 
 static inline void v_raise_error(const char *fmt, va_list argp) {
@@ -52,7 +166,7 @@ static bool kill_child_on_error = false;
 
 static inline void signal_and_error(pid_t cpid, const char * msg, ...)  {
   if (kill_child_on_error) {
-    ptrace(PTRACE_KILL, cpid, NULL, NULL);
+    ptrace_kill(cpid);
     wait(NULL);
   }
   va_list args;
@@ -61,13 +175,18 @@ static inline void signal_and_error(pid_t cpid, const char * msg, ...)  {
   va_end (args);
 }
 
-static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) __attribute__((always_inline)) {
+// The crux: update probes and semaphores
+
+#define CMP_OPCODE 0x3d
+#define CALL_OPCODE 0xe8
+
+static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) {
   unsigned long data;
   unsigned long cur;
   unsigned long new;
   errno = 0;
   addr = addr - 5;
-  data = ptrace(PTRACE_PEEKTEXT, cpid, addr, NULL);
+  data = ptrace_get_text(cpid, (void *) addr);
   if (errno != 0) {
     signal_and_error(cpid,
                      "modify_probe in pid %d: failed to PEEKTEXT at %lx with errno %d\n",
@@ -85,58 +204,58 @@ static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) __a
   }
   data = (data & ~0xff) | new;
   DEBUG(fprintf (stderr, "new at %lx: %lx\n", addr, data));
-  if (!ptrace(PTRACE_POKETEXT, cpid, addr, data)) {
-    signal_and_error(cpid, sprintf("modify_probe in pid %d:\n\
+  if (!ptrace_set_text(cpid, (void *) addr, (void *) data)) {
+    signal_and_error(cpid, "modify_probe in pid %d:\n\
                                     failed to POKETEXT at %lx new val=%lx with errno %d\n",
-                                    cpid, addr, data, errno));  
+                     cpid, addr, data, errno);  
   };
 }
 
-static inline void modify_semaphore(pid_t cpid, signed long delta, size_t addr) __attribute__((always_inline)) {
+static inline void modify_semaphore(pid_t cpid, signed long delta, unsigned long addr)  {
   errno = 0;
-  unsigned long data = ptrace(PTRACE_PEEKDATA, cpid, addr, NULL);
+  unsigned long data = ptrace_get_data(cpid, (void *) addr);
   if (errno != 0) {
-    signal_and_error(cpid, sprintf("modify_semaphore for probe in pid %d:\n\
+    signal_and_error(cpid, "modify_semaphore for probe in pid %d:\n\
                                    failed to PEEKDATA at %lx with errno %d\n",
-                                   cpid, addr, errno));       
+                     cpid, addr, errno);
   }
   data = (unsigned long)(((signed long)data)+delta);
   DEBUG(fprintf (stderr, "new at %lx: %lx\n", addr, data));
-  return ptrace(PTRACE_POKEDATA, cpid, addr, data);
+  ptrace_set_data(cpid, (void *) addr, (void *) data);
 }
 
-static inline int is_enabled(pid_t cpid, struct probe_note *notes) __attribute__((always_inline)) {
+static inline int is_enabled(pid_t cpid, struct probe_note *note)  {
   unsigned long addr = note->semaphore;
   errno = 0;
-  unsigned long data = ptrace(PTRACE_PEEKDATA, cpid, addr, NULL);
+  unsigned long data = ptrace_get_data(cpid, (void *) addr);
   if (errno != 0) {
-    signal_and_error(cpid, sprintf("is_enabled probe %s in pid %d: failed to PEEKDATA at %lx with errno %d\n",
-                                   note->name, cpid, addr, errno));    
+    signal_and_error(cpid, "is_enabled probe %s in pid %d: failed to PEEKDATA at %lx with errno %d\n",
+                     note->name, cpid, addr, errno);
   }
   DEBUG(fprintf (stderr, "semaphore at %lx = %lx\n", addr, data));
   return (((signed long) data) > 0);
 }
 
-static inline void update_probe(pid_t cpid, struct probe_note *note, bool enable) __attribute__((always_inline)) {
+static inline void update_probe(pid_t cpid, struct probe_note *note, bool enable)  {
   modify_probe(cpid, note->offset, enable);
   modify_semaphore(cpid, (enable?1:-1), note->semaphore);
 }
 
-static inline void set_all (struct probe_notes *notes, pid_t cpid, int enable) __attribute__((always_inline)) {
-  for (int i = 0; i < notes->num_notes; i++) {
+static inline void set_all (struct probe_notes *notes, pid_t cpid, int enable)  {
+  for (int i = 0; i < notes->num_probes; i++) {
       update_probe(cpid, notes->probe_notes[i], enable);
   }
 }
 
 /* ptrace calls, nothing specific to probes */
-static inline pid_t start (char **argv) __attribute__((always_inline)) {
+static inline pid_t start (char **argv)  {
   pid_t cpid = fork();
   if(cpid==-1) {
     raise_error("error doing fork\n");
   }
 
   if(cpid==0) {
-    if(ptrace(PTRACE_TRACEME, 0, NULL, NULL)) {
+    if (ptrace_traceme()) {
       raise_error("ptrace traceme error\n");
     }
     execv(argv[0], argv);
@@ -146,30 +265,32 @@ static inline pid_t start (char **argv) __attribute__((always_inline)) {
   int status = 0;
   wait(&status);
   if(!WIFSTOPPED(status)) {
-    signal_and_error(cpid, sprintf("not stopped %d\n", status));
+    signal_and_error(cpid, "not stopped %d\n", status);
   }
+  return cpid;
 }
 
-static inline void attach (pid_t cpid) __attribute__((always_inline)) {
-  if(ptrace(PTRACE_ATTACH, cpid, NULL, NULL)) {
-    raise_error(sprintf ("ptrace attach %d, error=%d\n" cpid, errno));
+static inline void attach (pid_t cpid)  {
+  if(ptrace_attach(cpid)) {
+    raise_error("ptrace attach %d, error=%d\n", cpid, errno);
   }
 
   int status = 0;
   pid_t res = waitpid(cpid, &status, WUNTRACED);
   if ((res != cpid) || !(WIFSTOPPED(status)) ) {
-    raise_error (sprintf("Unexpected wait result res %d stat %x\n",res,status));
+    raise_error ("Unexpected wait result res %d stat %x\n",res,status);
   }
 }
 
-static inline void detach (pid_t cpid) __attribute__((always_inline)) {
-  if(ptrace(PTRACE_CONT, cpid, NULL, NULL)==-1) {
+static inline void detach (pid_t cpid)  {
+  /*
+  if(ptrace_cont(cpid)==-1) {
     signal_and_error(cpid,
-                     sprintf("could not continue, errno=%d\n", errno));
+                     "could not continue, errno=%d\n", errno);
   }
-  if (ptrace(PTRACE_DETACH, cpid, NULL, NULL)) {
-    signal_and_error(cpid,
-                     sprintf ("could not detach %d, errno=%d\n", cpid, errno);
+  */
+  if (ptrace_detach(cpid)) {
+    signal_and_error(cpid, "could not detach %d, errno=%d\n", cpid, errno);
   }
 }
 
@@ -184,10 +305,9 @@ CAMLprim value caml_probes_lib_start (value v_argv)
   if (argc < 1) {
     raise_error("Missing executable name\n");
   }
-  const char ** argv =
-    (const char **) caml_stat_alloc((argc + 1 /* for NULL */)
-                                    * sizeof(const char *));
-  for (i = 0; i < argc; i++) argv[i] = String_val(Field(v_argv, i));
+ char ** argv = (char **) caml_stat_alloc((argc + 1 /* for NULL */)
+                                          * sizeof(const char *));
+  for (int i = 0; i < argc; i++) argv[i] = String_val(Field(v_argv, i));
   argv[argc] = NULL;
 
   pid_t cpid = start(argv);
@@ -195,7 +315,6 @@ CAMLprim value caml_probes_lib_start (value v_argv)
   caml_stat_free(argv);
   CAMLreturn(Val_long(cpid));
 }
-
 
 CAMLprim value caml_probes_lib_attach (value v_pid)
 {
@@ -224,7 +343,7 @@ static struct custom_operations probe_notes_ops = {
 };
 
 /* Accessing the note part of an OCaml custom block */
-#define Probe_notes_val(v) (*((probe_notes **) Data_custom_val(v)))
+#define Probe_notes_val(v) (*((struct probe_notes **) Data_custom_val(v)))
 
 CAMLprim value caml_probes_lib_read_notes (value v_filename) {
   CAMLparam1(v_filename);
@@ -232,11 +351,11 @@ CAMLprim value caml_probes_lib_read_notes (value v_filename) {
 
   struct probe_notes *res = malloc(sizeof(struct probe_notes));
   if(read_notes(filename, res)) {
-    raise_error (sprintf ("could not parse probe notes from %s\n" filename));
+    raise_error ("could not parse probe notes from %s\n", filename);
   }
 
   /* Allocating an OCaml custom block to hold the notes */
-  value v_internal = caml_alloc_custom(&probe_notes_ops, sizeof(probe_notes *), 0, 1);
+  value v_internal = caml_alloc_custom(&probe_notes_ops, sizeof(struct probe_notes *), 0, 1);
   Probe_notes_val(v_internal) = res;
   CAMLreturn(v_internal);
 }
@@ -246,7 +365,7 @@ CAMLprim value caml_probes_lib_get_names (value v_internal) {
   CAMLlocal2(v_names, v_name);
 
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  size_t n = notes->num_notes;
+  size_t n = notes->num_probes;
   v_names = caml_alloc(n,0);
   for (int i = 0; i < n; i++) {
     v_name = caml_copy_string(notes->probe_notes[i]->name);
@@ -257,11 +376,11 @@ CAMLprim value caml_probes_lib_get_names (value v_internal) {
 
 CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid) {
   CAMLparam1(v_internal);
-  CAMLlocal2(v_states);
+  CAMLlocal1(v_states);
   pid_t cpid = Long_val(v_pid);
 
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  size_t n = notes->num_notes;
+  size_t n = notes->num_probes;
   v_states = caml_alloc(n,0);
   int b;
   for (int i = 0; i < n; i++) {
@@ -280,7 +399,7 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
   int enable = Bool_val(v_enable);
   char *name = String_val(v_name);
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  for (int i = 0; i < notes->num_notes; i++) {
+  for (int i = 0; i < notes->num_probes; i++) {
     if (!strcmp(name, notes->probe_notes[i]->name)) {
       update_probe(cpid, notes->probe_notes[i], enable);
     }
@@ -316,15 +435,17 @@ CAMLprim value caml_probes_lib_attach_set_all_detach (value v_internal, value v_
 CAMLprim value stub_trace_all (value v_internal, value v_argv)
 {
   CAMLparam2(v_internal,v_argv);
-  
+  struct probe_notes *notes = Probe_notes_val(v_internal);
+
+  // CR-soon gyorsh: same code in caml_probes_lib_start,
+  // factor out into a func, careful with ocaml vals
   int argc = Wosize_val(v_argv);
   if (argc < 1) {
     raise_error("Missing executable name\n");
   }
-  const char ** argv =
-    (const char **) caml_stat_alloc((argc + 1 /* for NULL */)
-                                    * sizeof(const char *));
-  for (i = 0; i < argc; i++) argv[i] = String_val(Field(v_argv, i));
+  char ** argv = (char **) caml_stat_alloc((argc + 1 /* for NULL */)
+                                           * sizeof(const char *));
+  for (int i = 0; i < argc; i++) argv[i] = String_val(Field(v_argv, i));
   argv[argc] = NULL;
   pid_t cpid = start(argv);
   caml_stat_free(argv);
