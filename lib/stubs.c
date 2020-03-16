@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -8,13 +9,17 @@
 /* #ifdef OCAML_OS_TYPE == "Unix" */
 #if defined(__GNUC__) && (defined (__ELF__))
 #include <linux/ptrace.h>
+#elif defined(__APPLE__)
+#include "apples.h"
+#include <mach/mach_types.h>
 #endif
 #include <sys/user.h>
 #include <sys/wait.h>
 #include "read_note.h"
 
 #define CAML_NAME_SPACE
-#include <caml/compatibility.h>
+#include <caml/fail.h>
+#include <caml/callback.h>
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
@@ -27,21 +32,33 @@
 
 #define DEBUG(stmt) stmt
 
-void raise_error(const char * msg)
-{
-  DEBUG(fprintf(stderr, "Error: %s\n" msg));
-  caml_raise_with_string(*caml_named_value("caml_probes_lib_stub_exception"),
-                         msg);
+static inline void v_raise_error(const char *fmt, va_list argp) {
+
+  int n = 256;
+  char buf[n];
+  vsnprintf(buf,n,fmt,argp);
+  DEBUG(fprintf(stderr,"Error: %s\n", buf));
+  caml_raise_with_string(*caml_named_value("caml_probes_lib_stub_exception"), buf);
+}
+
+static inline void raise_error(const char * msg, ...) {
+  va_list args;
+  va_start (args, msg);
+  v_raise_error(msg, args);
+  va_end (args);
 }
 
 static bool kill_child_on_error = false;
 
-static inline void signal_and_error(pid_t cpid, char * msg) __attribute__((always_inline)) {
+static inline void signal_and_error(pid_t cpid, const char * msg, ...)  {
   if (kill_child_on_error) {
     ptrace(PTRACE_KILL, cpid, NULL, NULL);
     wait(NULL);
   }
-  raise_error(msg);
+  va_list args;
+  va_start (args, msg);
+  v_raise_error(msg, args);
+  va_end (args);
 }
 
 static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) __attribute__((always_inline)) {
@@ -52,9 +69,9 @@ static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) __a
   addr = addr - 5;
   data = ptrace(PTRACE_PEEKTEXT, cpid, addr, NULL);
   if (errno != 0) {
-    signal_and_error(cpid, sprintf("modify_probe in pid %d:\n\
-                                    failed to PEEKTEXT at %lx with errno %d\n",
-                                    cpid, addr, errno));       
+    signal_and_error(cpid,
+                     "modify_probe in pid %d: failed to PEEKTEXT at %lx with errno %d\n",
+                     cpid, addr, errno);
   }
   if (enable) {
     cur = CMP_OPCODE; new = CALL_OPCODE;

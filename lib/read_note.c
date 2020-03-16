@@ -7,6 +7,8 @@
 typedef uint8_t __u8;
 typedef uint32_t __u32;
 typedef uint64_t __u64;
+#include "apples.h"
+#include <mach/mach_types.h>
 #endif
 
 #include <stdio.h>
@@ -169,7 +171,7 @@ int read_notes(char *filename, struct probe_notes *result) {
   while(offset < ms.stapsdt.size) {
     if (num_notes >= len_notes) {
       len_notes = (len_notes == 0? 64 : len_notes * 2);
-      notes = (struct probe_note **) realloc(notes, sizeof(struct probe_note *) * len);
+      notes = (struct probe_note **) realloc(notes, sizeof(struct probe_note *) * len_notes);
       if (!notes) {
         // we could just return what was read so far, instead of failing.
         fprintf(stderr, "could not allocate space for all notes.\n");
