@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
@@ -21,7 +22,7 @@ static inline long ptrace_attach(pid_t pid)
 
 static inline long ptrace_detach(pid_t pid)
 { return ptrace(PTRACE_DETACH, pid, NULL, NULL); }
-        
+
 static inline long ptrace_kill(pid_t pid)
 { return ptrace(PTRACE_KILL, pid, NULL, NULL); }
 
@@ -53,33 +54,33 @@ static inline long ptrace_attach(pid_t pid)
 
 static inline long ptrace_detach(pid_t pid)
 { return ptrace(PT_DETACH, pid, (caddr_t)1, 0); }
-        
+
 static inline long ptrace_kill(pid_t pid)
 { return ptrace(PT_KILL, pid, (caddr_t)1, 0); }
 
 // CR-soon gyorsh: test peek/poke on mac
 static inline long get_mem(pid_t pid, void *addr, vm_prot_t prot)
-{ 
+{
   kern_return_t kret;
   mach_port_t task;
   unsigned long res;
   pointer_t buffer;
   uint32_t size;
-  
+
   kret = task_for_pid(mach_task_self(), pid, &task);
   if ((kret!=KERN_SUCCESS) || !MACH_PORT_VALID(task))
     {
       fprintf(stderr, "task_for_pid failed: %s!\n",mach_error_string(kret));
       exit(2);
     }
-  
+
   kret = vm_protect(task, (vm_address_t) addr, sizeof (unsigned long), FALSE, prot);
   if (kret!=KERN_SUCCESS)
   {
     fprintf(stderr, "vm_protect failed: %s!\n", mach_error_string(kret));
     exit(2);
   }
-  
+
   kret = vm_read(task, (vm_address_t) addr, sizeof(unsigned long), &buffer, &size);
   if (kret!=KERN_SUCCESS)
   {
@@ -94,7 +95,7 @@ static inline long set_mem(pid_t pid, void *addr, void *data, vm_prot_t prot)
 {
   kern_return_t kret;
   mach_port_t task;
-  
+
   kret = task_for_pid(mach_task_self(), pid, &task);
   if ((kret!=KERN_SUCCESS) || !MACH_PORT_VALID(task))
     {
@@ -108,7 +109,7 @@ static inline long set_mem(pid_t pid, void *addr, void *data, vm_prot_t prot)
     fprintf(stderr, "vm_protect failed: %s!\n", mach_error_string(kret));
     exit(2);
   }
-  
+
   kret = vm_write(task, (vm_address_t) addr, (vm_address_t) data, sizeof(unsigned long));
   if (kret!=KERN_SUCCESS)
   {
@@ -207,7 +208,7 @@ static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) {
   if (!ptrace_set_text(cpid, (void *) addr, (void *) data)) {
     signal_and_error(cpid, "modify_probe in pid %d:\n\
                                     failed to POKETEXT at %lx new val=%lx with errno %d\n",
-                     cpid, addr, data, errno);  
+                     cpid, addr, data, errno);
   };
 }
 
@@ -432,7 +433,7 @@ CAMLprim value caml_probes_lib_attach_set_all_detach (value v_internal, value v_
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value stub_trace_all (value v_internal, value v_argv)
+CAMLprim value caml_probes_lib_trace_all (value v_internal, value v_argv)
 {
   CAMLparam2(v_internal,v_argv);
   struct probe_notes *notes = Probe_notes_val(v_internal);

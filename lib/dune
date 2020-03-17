@@ -1,6 +1,7 @@
 (library
  (name probes_lib)
  (public_name probes-lib)
+ (libraries unix)
  (foreign_stubs
   (language c)
   (names read_note stubs)
