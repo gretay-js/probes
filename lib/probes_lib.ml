@@ -12,7 +12,7 @@ type internal
 (** custom block, includes information such as probe offset, semaphore
     offset, and the location of arguments for the bpf handler.*)
 
-external stub_start : argv:string list -> pid = "caml_probes_lib_start"
+external stub_start : argv:string array -> pid = "caml_probes_lib_start"
 
 external stub_attach : pid -> unit = "caml_probes_lib_attach"
 
@@ -33,7 +33,7 @@ external stub_set_all : internal -> pid -> enable:bool -> unit
 external stub_set_one : internal -> pid -> name:string -> enable:bool -> unit
   = "caml_probes_lib_update"
 
-external stub_trace_all : internal -> argv:string list -> unit
+external stub_trace_all : internal -> argv:string array -> unit
   = "caml_probes_lib_trace_all"
 
 external stub_attach_set_all_detach : internal -> pid -> enable:bool -> unit
@@ -110,7 +110,8 @@ let attach t pid ~check_prog =
 let start t ~prog ~args ~check_prog =
   if !verbose then (
     Printf.printf "start";
-    List.iter (fun s -> Printf.printf " %s" s) (prog :: args) );
+    List.iter (fun s -> Printf.printf " %s" s) (prog :: args);
+    Printf.printf "\n" );
   if check_prog then
     if not (String.equal prog t.prog) then
       raise
@@ -124,7 +125,7 @@ let start t ~prog ~args ~check_prog =
            (Printf.sprintf "Cannot start %s, already attached to %d" prog
               existing_pid))
   | Not_attached ->
-      let pid = stub_start ~argv:(prog :: args) in
+      let pid = stub_start ~argv:(Array.of_list (prog :: args)) in
       t.pid <- Attached pid;
       (* Update [t.pid] after stub to ensure stub didn't raise *)
       ()
@@ -184,7 +185,7 @@ let trace_all t ~prog ~args =
         (Error
            (Printf.sprintf "trace_all %s:\n already attached to %d \n"
               (String.concat " " argv) existing_pid))
-  | Not_attached -> stub_trace_all t.internal ~argv
+  | Not_attached -> stub_trace_all t.internal ~argv:(Array.of_list argv)
 
 let attach_update_all_detach t pid ~enable =
   match t.pid with

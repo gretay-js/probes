@@ -199,15 +199,18 @@ static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) {
     cur = CALL_OPCODE; new = CMP_OPCODE;
   }
   DEBUG(fprintf (stderr, "cur at %lx: %lx\n", addr, data));
+  if ((data & 0xff) == new) {
+    DEBUG(fprintf(stderr, "cur is already set as required.\n"));
+    return;
+  }
   if ((data & 0xff) != cur) {
     fprintf(stderr, "Warning: unexpected instruction at %lx! %lx instead of %lx\n",
             addr, (data & 0xff), cur);
   }
   data = (data & ~0xff) | new;
   DEBUG(fprintf (stderr, "new at %lx: %lx\n", addr, data));
-  if (!ptrace_set_text(cpid, (void *) addr, (void *) data)) {
-    signal_and_error(cpid, "modify_probe in pid %d:\n\
-                                    failed to POKETEXT at %lx new val=%lx with errno %d\n",
+  if (ptrace_set_text(cpid, (void *) addr, (void *) data)) {
+    signal_and_error(cpid, "modify_probe in pid %d: failed to POKETEXT at %lx new val=%lx with errno %d\n",
                      cpid, addr, data, errno);
   };
 }
@@ -220,9 +223,13 @@ static inline void modify_semaphore(pid_t cpid, signed long delta, unsigned long
                                    failed to PEEKDATA at %lx with errno %d\n",
                      cpid, addr, errno);
   }
+  DEBUG(fprintf (stderr, "old at %lx: %lx\n", addr, data));
   data = (unsigned long)(((signed long)data)+delta);
   DEBUG(fprintf (stderr, "new at %lx: %lx\n", addr, data));
-  ptrace_set_data(cpid, (void *) addr, (void *) data);
+  if (ptrace_set_data(cpid, (void *) addr, (void *) data)) {
+    signal_and_error(cpid, "modify_semaphore for probe in pid %d: failed to POKEDATA at %lx new val=%lx with errno %d\n",
+                     cpid, addr, data, errno);
+  }
 }
 
 static inline int is_enabled(pid_t cpid, struct probe_note *note)  {
@@ -259,8 +266,16 @@ static inline pid_t start (char **argv)  {
     if (ptrace_traceme()) {
       raise_error("ptrace traceme error\n");
     }
+    errno = 0;
     execv(argv[0], argv);
-    raise_error("error running exec\n");
+
+    /* only get here on an exec error */
+    if (errno == ENOENT)
+      raise_error("error running exec: program not found\n");
+    else if (errno == ENOMEM)
+      raise_error("error running exec: not enough memory\n");
+    else
+      raise_error("error running exec\n");
   }
 
   int status = 0;
@@ -302,18 +317,25 @@ CAMLprim value caml_probes_lib_start (value v_argv)
 {
   CAMLparam1(v_argv); /* string list */
   int argc = Wosize_val(v_argv);
+  DEBUG(fprintf(stderr, "start: argc=%d\n", argc));
 
   if (argc < 1) {
     raise_error("Missing executable name\n");
   }
- char ** argv = (char **) caml_stat_alloc((argc + 1 /* for NULL */)
-                                          * sizeof(const char *));
-  for (int i = 0; i < argc; i++) argv[i] = String_val(Field(v_argv, i));
+  char ** argv = (char **) malloc ((argc + 1 /* for NULL */)
+                                   * sizeof(char *));
+  for (int i = 0; i < argc; i++) {
+    argv[i] = strdup(String_val(Field(v_argv, i)));
+    DEBUG(fprintf(stderr, "start: argv[%d]=%s\n", i, argv[i]));
+  }
   argv[argc] = NULL;
 
   pid_t cpid = start(argv);
 
-  caml_stat_free(argv);
+  for (int i = 0; i < argc; i++) {
+    free(argv[i]);
+  }
+  free (argv);
   CAMLreturn(Val_long(cpid));
 }
 
