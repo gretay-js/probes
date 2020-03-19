@@ -34,5 +34,28 @@ let trace ~prog ~args ~bpf ~(actions : P.actions) =
   | All Enable -> P.trace_all t ~prog ~args
   | All Disable | Selected _ ->
       P.start t ~prog ~args ~check_prog:false;
-      P.update t ~actions;
+      (* All probes are disabled initially, only enable actions matter at
+         start. *)
+      ( match actions with
+      | All Disable ->
+          Printf.printf
+            "Ignoring -disable-all with trace: all probes start as disabled\n"
+      | All Enable -> assert false
+      | Selected x -> (
+          let y =
+            List.filter
+              (fun (action, name) ->
+                match action with
+                | P.Disable ->
+                    Printf.printf
+                      "Ignoring -disable %s with trace: all probes start as \
+                       disabled.\n"
+                      name;
+                    false
+                | P.Enable -> true)
+              x
+          in
+          match y with
+          | [] -> ()
+          | _ -> P.update t ~actions:(Selected y) ) );
       P.detach t

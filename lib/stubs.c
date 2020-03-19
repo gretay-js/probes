@@ -471,20 +471,9 @@ CAMLprim value caml_probes_lib_attach_set_all_detach (value v_internal, value v_
 CAMLprim value caml_probes_lib_trace_all (value v_internal, value v_argv)
 {
   CAMLparam2(v_internal,v_argv);
+  value v_pid = caml_probes_lib_start(v_argv);
   struct probe_notes *notes = Probe_notes_val(v_internal);
-
-  // CR-soon gyorsh: same code in caml_probes_lib_start,
-  // factor out into a func, careful with ocaml vals
-  int argc = Wosize_val(v_argv);
-  if (argc < 1) {
-    raise_error("Missing executable name\n");
-  }
-  char ** argv = (char **) caml_stat_alloc((argc + 1 /* for NULL */)
-                                           * sizeof(const char *));
-  for (int i = 0; i < argc; i++) argv[i] = String_val(Field(v_argv, i));
-  argv[argc] = NULL;
-  pid_t cpid = start(argv);
-  caml_stat_free(argv);
+  pid_t cpid = Long_val(v_pid);
   set_all(notes, cpid, true);
   detach(cpid);
   CAMLreturn(Val_unit);

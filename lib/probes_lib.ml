@@ -145,7 +145,10 @@ let update t ~actions =
   | Not_attached -> raise (Error "update failed: no pid\n")
   | Attached pid -> (
       match actions with
-      | All action -> stub_set_all t.internal pid ~enable:(enable action)
+      | All action ->
+          if !verbose then
+            Printf.printf "stub_set_all %d %b\n" pid (enable action);
+          stub_set_all t.internal pid ~enable:(enable action)
       | Selected l ->
           List.iter
             (fun (action, name) ->
@@ -185,7 +188,10 @@ let trace_all t ~prog ~args =
         (Error
            (Printf.sprintf "trace_all %s:\n already attached to %d \n"
               (String.concat " " argv) existing_pid))
-  | Not_attached -> stub_trace_all t.internal ~argv:(Array.of_list argv)
+  | Not_attached ->
+      if !verbose then
+        Printf.printf "stub_trace_all %s\n" (String.concat " " argv);
+      stub_trace_all t.internal ~argv:(Array.of_list argv)
 
 let attach_update_all_detach t pid ~enable =
   match t.pid with
@@ -195,4 +201,7 @@ let attach_update_all_detach t pid ~enable =
            (Printf.sprintf
               "attach_and_set_all pid=%d: already attached to %d \n" pid
               existing_pid))
-  | Not_attached -> stub_attach_set_all_detach t.internal pid ~enable
+  | Not_attached ->
+      if !verbose then
+        Printf.printf "stub_attach_set_all_detach %d %b\n" pid enable;
+      stub_attach_set_all_detach t.internal pid ~enable

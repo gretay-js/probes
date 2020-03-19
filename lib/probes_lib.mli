@@ -40,8 +40,9 @@ val attach : t -> pid -> check_prog:bool -> unit
     construct [t] do not match. *)
 
 val start : t -> prog:string -> args:string list -> check_prog:bool -> unit
-(** Execute the program using ptrace, but stop the process to update the
-    probes. If [check_prog] is true, rause if prog and [t] do not match. *)
+(** Execute the program using ptrace, but stop the process immediately before
+    the first command of [prog], to call [update] before any probes run. If
+    [check_prog] is true, rause if prog and [t] do not match. *)
 
 val update : t -> actions:actions -> unit
 (** Enable/disable probes. Raise if not attached to any process. [update]
