@@ -15,16 +15,23 @@ let flag_actions =
     let s = to_string a in
     let name = sprintf "-%s-all" s in
     let doc = sprintf " %s all probes" s in
-    flag name no_arg ~doc
+    flag ~full_flag_required:() name no_arg ~doc
     |> map ~f:(function
          | true -> Some (P.All a)
          | false -> None)
   in
-  let f = function
+  let check ~name = function
     | [] -> String.Set.empty
     | sl ->
         List.map ~f:(String.split ~on:',') sl
-        |> List.concat |> String.Set.of_list
+        |> List.concat
+        |> List.fold ~init:String.Set.empty ~f:(fun acc x ->
+               if String.Set.mem acc x then
+                 failwithf
+                   "Probe name %s appears more than once as an argument of \
+                    %s"
+                   x name ();
+               String.Set.add acc x)
   in
   let flag_list a =
     let s = to_string a in
@@ -35,7 +42,8 @@ let flag_actions =
          names)"
         s
     in
-    flag name (listed string) ~doc |> map ~f
+    flag ~full_flag_required:() name (listed string) ~doc
+    |> map ~f:(check ~name)
   in
   let check_disjoint enable disable =
     (* Detect when the same probe name appears twice under incompatible
@@ -53,11 +61,13 @@ let flag_actions =
     Command.Let_syntax.(
       let%map enable = flag_list P.Enable
       and disable = flag_list P.Disable in
-      check_disjoint enable disable;
-      let actions =
-        map_action P.Enable enable @ map_action P.Disable disable
-      in
-      Some (P.Selected actions))
+      if String.Set.is_empty enable && String.Set.is_empty disable then None
+      else (
+        check_disjoint enable disable;
+        let actions =
+          map_action P.Enable enable @ map_action P.Disable disable
+        in
+        Some (P.Selected actions) ))
   in
   choose_one
     [flag_all P.Enable; flag_all P.Disable; flag_selected]

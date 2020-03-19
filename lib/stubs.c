@@ -422,10 +422,23 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
   int enable = Bool_val(v_enable);
   char *name = String_val(v_name);
   struct probe_notes *notes = Probe_notes_val(v_internal);
+  // CR-soon gyorsh: update by index, not name, to avoid scanning probe_notes array
+  // for each name.
+  // For it to be efficient, avoid multiple calls to this stub (a call per index
+  // with the same name) unless the call can be made very cheap,
+  // and avoid allocation of another array for the indexes just for the update.
+  // Approach: when creating
+  // It matter if there are many probes that are enabled/disabled often while
+  // the tracer remains attached (i.e., use  seize + interrupt
+  // instead of traceme/attach ptrace calls).
   for (int i = 0; i < notes->num_probes; i++) {
+    bool found = false;
     if (!strcmp(name, notes->probe_notes[i]->name)) {
+      found = true;
       update_probe(cpid, notes->probe_notes[i], enable);
     }
+    if (!found)
+      DEBUG(fprintf(stderr, "update probe failed: probe named %s is not found\n", name));
   }
   CAMLreturn(Val_unit);
 }
