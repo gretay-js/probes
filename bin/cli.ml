@@ -49,7 +49,7 @@ let flag_actions =
   let map_action a names =
     String.Set.to_list names |> List.map ~f:(fun s -> (a, s))
   in
-  let _flag_selected =
+  let flag_selected =
     Command.Let_syntax.(
       let%map enable = flag_list P.Enable
       and disable = flag_list P.Disable in
@@ -60,7 +60,7 @@ let flag_actions =
       Some (P.Selected actions))
   in
   choose_one
-    [flag_all P.Enable; flag_all P.Disable (* flag_selected *)]
+    [flag_all P.Enable; flag_all P.Disable; flag_selected]
     ~if_nothing_chosen:(Default_to (P.All P.Enable))
 
 (* CR gyorsh: the functionality for bpf is in, but the command line interface
