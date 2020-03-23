@@ -10,7 +10,7 @@ type pid = int
 
 type internal
 (** custom block, includes information such as probe offset, semaphore
-    offset, and the location of arguments for the bpf handler.*)
+    offset, and the location of arguments for the bpf handler. *)
 
 external stub_start : argv:string array -> pid = "caml_probes_lib_start"
 

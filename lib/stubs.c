@@ -1,3 +1,14 @@
+/* CR mshinwell: Please reformat all the C code to 80 columns.  Also, the
+   standard is to put curly braces like this:
+
+   static void foo ()
+   {
+
+   and not like this:
+
+   static void foo () {
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -148,11 +159,12 @@ static inline long ptrace_set_data(pid_t pid, void *addr, void *data)
 #define DEBUG(stmt) stmt
 
 static inline void v_raise_error(const char *fmt, va_list argp) {
-
   int n = 256;
   char buf[n];
   vsnprintf(buf,n,fmt,argp);
   DEBUG(fprintf(stderr,"Error: %s\n", buf));
+  /* CR mshinwell: This should check that [caml_named_value] doesn't return
+     NULL before dereferencing */
   caml_raise_with_string(*caml_named_value("caml_probes_lib_stub_exception"), buf);
 }
 
@@ -204,6 +216,7 @@ static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable) {
     return;
   }
   if ((data & 0xff) != cur) {
+    /* CR mshinwell: I think this should stop and not update the instruction. */
     fprintf(stderr, "Warning: unexpected instruction at %lx! %lx instead of %lx\n",
             addr, (data & 0xff), cur);
   }
@@ -315,7 +328,7 @@ static inline void detach (pid_t cpid)  {
 
 CAMLprim value caml_probes_lib_start (value v_argv)
 {
-  CAMLparam1(v_argv); /* string list */
+  CAMLparam1(v_argv); /* string array */
   int argc = Wosize_val(v_argv);
   DEBUG(fprintf(stderr, "start: argc=%d\n", argc));
 
@@ -329,6 +342,9 @@ CAMLprim value caml_probes_lib_start (value v_argv)
     DEBUG(fprintf(stderr, "start: argv[%d]=%s\n", i, argv[i]));
   }
   argv[argc] = NULL;
+
+  /* CR-soon mshinwell: We should think about whether we should release the
+     runtime lock here */
 
   pid_t cpid = start(argv);
 
@@ -374,6 +390,7 @@ CAMLprim value caml_probes_lib_read_notes (value v_filename) {
 
   struct probe_notes *res = malloc(sizeof(struct probe_notes));
   if(read_notes(filename, res)) {
+    free(res);
     raise_error ("could not parse probe notes from %s\n", filename);
   }
 
@@ -447,6 +464,11 @@ CAMLprim value caml_probes_lib_set_all (value v_internal, value v_pid,
                                         value v_enable) {
   // This function doesn't allocate, but set_all may raise
   // we still need to register these values with the GC.
+  // CR mshinwell: Here and in the function above, I don't think the fact that
+  // [set_all] raises means these need to be registered.  It does mean that
+  // the [external] declaration cannot be marked "noalloc", but it isn't
+  // anyway.  However I would leave the CAMLparam invocations here, they are
+  // harmless.
   CAMLparam1(v_internal);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);

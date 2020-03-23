@@ -75,7 +75,8 @@ let flag_actions =
 
 (* CR gyorsh: the functionality for bpf is in, but the command line interface
    isn't implemented yet. Requires setuid privilleages on this tool to run. *)
-
+(* CR mshinwell: Don't show the BPF stuff to the user yet, we can expose that
+   in due course when we decide how to proceed on that front. *)
 let flag_bpf =
   Command.Param.(
     flag "-bpf" no_arg
@@ -108,7 +109,7 @@ let attach_command =
     ~readme:(fun () ->
       "After updating the probes, detach from the process and return,\n\
        letting the process continue normally.\n\
-       If '-bpf' is specified, detaching TBD.")
+       If '-bpf' is specified, detaching TBD.") (* CR mshinwell: same here *)
     Command.Let_syntax.(
       let%map v = flag_v
       and q = flag_q
@@ -122,7 +123,7 @@ let attach_command =
 let info_command =
   Command.basic
     ~summary:
-      "Attach to a running process and print for each probe if it is \
+      "Attach to a running process and print for each probe whether it is \
        enabled/disabled"
     Command.Let_syntax.(
       let%map v = flag_v
@@ -134,7 +135,7 @@ let info_command =
       fun () -> Main.info ~pid ~bpf)
 
 let trace_command =
-  Command.basic
+  Command.basic  (* CR mshinwell: remove BPF reference here too *)
     ~summary:"Execute the program with probes enabled as specified"
     ~readme:(fun () ->
       "Guarantees that all specified probes are enabled before the program \
