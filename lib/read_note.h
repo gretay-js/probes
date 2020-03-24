@@ -25,4 +25,4 @@ struct probe_notes {
 
 int read_notes(char *file, struct probe_notes *result);
 
-// CR rcummings: need functions to conveniently free these structs
+// CR-soon rcummings: need functions to conveniently free these structs

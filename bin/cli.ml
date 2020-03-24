@@ -1,7 +1,7 @@
 open Core
 module P = Probes_lib
 
-let set_verbose v = Probes_lib.verbose := v
+let set_verbose v = Probes_lib.set_verbose v
 
 (* CR-someday gyorsh: read from file what to enable and disable *)
 
@@ -73,11 +73,12 @@ let flag_actions =
     [flag_all P.Enable; flag_all P.Disable; flag_selected]
     ~if_nothing_chosen:(Default_to (P.All P.Enable))
 
-(* CR gyorsh: the functionality for bpf is in, but the command line interface
-   isn't implemented yet. Requires setuid privilleages on this tool to run. *)
-(* CR mshinwell: Don't show the BPF stuff to the user yet, we can expose that
-   in due course when we decide how to proceed on that front. *)
-let flag_bpf =
+(* CR-soon gyorsh: the functionality for bpf is in, but the command line
+   interface isn't implemented yet. Requires setuid privilleages on this tool
+   to run. *)
+let bpf = false
+
+let _flag_bpf =
   Command.Param.(
     flag "-bpf" no_arg
       ~doc:
@@ -108,14 +109,13 @@ let attach_command =
       "Attach to a running process and enable/disable specified probes"
     ~readme:(fun () ->
       "After updating the probes, detach from the process and return,\n\
-       letting the process continue normally.\n\
-       If '-bpf' is specified, detaching TBD.") (* CR mshinwell: same here *)
+       letting the process continue normally.")
     Command.Let_syntax.(
       let%map v = flag_v
       and q = flag_q
       and pid = flag_pid
-      and actions = flag_actions
-      and bpf = flag_bpf in
+      (* and bpf = flag_bpf *)
+      and actions = flag_actions in
       if v then set_verbose true;
       if q then set_verbose false;
       fun () -> Main.attach ~pid ~bpf ~actions)
@@ -128,14 +128,14 @@ let info_command =
     Command.Let_syntax.(
       let%map v = flag_v
       and q = flag_q
-      and pid = flag_pid
-      and bpf = flag_bpf in
+      (* and bpf = flag_bpf *)
+      and pid = flag_pid in
       if v then set_verbose true;
       if q then set_verbose false;
       fun () -> Main.info ~pid ~bpf)
 
 let trace_command =
-  Command.basic  (* CR mshinwell: remove BPF reference here too *)
+  Command.basic
     ~summary:"Execute the program with probes enabled as specified"
     ~readme:(fun () ->
       "Guarantees that all specified probes are enabled before the program \
@@ -144,7 +144,6 @@ let trace_command =
        probes enabled as specified. \n\
        Then, detach from the child process and return, while the child \
        process continues program execution normally.\n\
-       If '-bpf' is specified, detaching is TBD.\n\
        User can call 'attach' on the running process to enable/disable \
        probes again. \n\
        The need for 'trace' command arises when tracing probes right at the \
@@ -156,7 +155,7 @@ let trace_command =
       let%map v = flag_v
       and q = flag_q
       and prog = flag_prog
-      and bpf = flag_bpf
+      (* and bpf = flag_bpf *)
       and actions = flag_actions
       and args =
         Command.Param.(

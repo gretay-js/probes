@@ -1,5 +1,3 @@
-let verbose = ref false
-
 exception Error of string
 
 let (_ : unit) =
@@ -39,10 +37,22 @@ external stub_trace_all : internal -> argv:string array -> unit
 external stub_attach_set_all_detach : internal -> pid -> enable:bool -> unit
   = "caml_probes_lib_attach_set_all_detach"
 
+external stub_verbose : bool -> unit = "caml_probes_lib_set_verbose"
+
+type probe_name = string
+
 type probe_desc =
-  { name : string;
+  { name : probe_name;
     enabled : bool
   }
+
+type action =
+  | Enable
+  | Disable
+
+type actions =
+  | All of action
+  | Selected of (action * probe_name) list
 
 type prog_status =
   | Attached of pid
@@ -56,13 +66,12 @@ type t =
     internal : internal  (** probe details *)
   }
 
-type action =
-  | Enable
-  | Disable
+let verbose = ref false
 
-type actions =
-  | All of action
-  | Selected of (action * string) list
+let set_verbose b =
+  verbose := b;
+  stub_verbose b;
+  ()
 
 let user_error fmt =
   Format.kfprintf
@@ -155,6 +164,9 @@ let update t ~actions =
               stub_set_one t.internal pid ~name ~enable:(enable action))
             l )
 
+(* Reads the value of probe semaphores in current process's memory. An
+   alternative implementation (for example, if semaphores aren't in use),
+   could be to check the instruction at the probe in the text section. *)
 (* CR-soon gyorsh: avoid unnecessary writes to memory when the current state
    of the probe is arleady as needed. *)
 let get_probe_states t =
@@ -166,6 +178,16 @@ let get_probe_states t =
         t.probe_names
         (stub_get_states t.internal pid)
 
+(* We use PTRACE_DETACH and not PTRACE_CONT: After sending PTRACE_CONT signal
+   to the child process, the parent needs to stop the child process again to
+   make updates to probes, and the only way to stop is to send PTRACE_ATTACH.
+   It means it is not useful to stay attached after continue, because the
+   tracer cannot do anything with the probes. An alternative is to use
+   PTRACE_SEIZE instead of PTRACE_ATTACH and then explicitly interrupt to
+   stop the process. This way the tracer can remain attached to the child.
+   (Is it required for bpf?) The advantage of detaching is that it allows
+   another tool such as gdb to attach. Only one parent can be attached at any
+   give time. *)
 let detach t =
   match t.pid with
   | Not_attached -> raise (Error "detach failed: no pid\n")

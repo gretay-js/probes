@@ -36,7 +36,8 @@ struct section {
   char *name;
 };
 
-static char *section_data(struct whole_elf *whole_elf, struct section *section) {
+static char *section_data(struct whole_elf *whole_elf, struct section *section)
+{
   return whole_elf->data + section->offset;
 }
 
@@ -46,10 +47,14 @@ struct section_table {
   size_t num_headers;
 };
 
-static int read_section_details(struct whole_elf *whole_elf, struct section_table *section_table,
-                         size_t index, struct section *strings, struct section *result) {
+static int read_section_details(struct whole_elf *whole_elf,
+                                struct section_table *section_table,
+                                size_t index, struct section *strings,
+                                struct section *result)
+{
   if(!whole_elf ||!section_table || !strings || !result) return 1;
-  char *base = whole_elf->data + section_table->offset + index * section_table->entry_size;
+  char *base = whole_elf->data + section_table->offset +
+    index * section_table->entry_size;
   size_t name_offset = *(__u32*)base;
   result->offset = *(__u64*)(base+0x18);
   result->size = *(__u64*)(base+0x20);
@@ -86,7 +91,8 @@ static int get_main_sections(struct whole_elf *whole_elf,
   struct section current;
   bool found_stapsdt = false;
   for(size_t i = 0; i<section_table.num_headers; ++i) {
-    read_section_details(whole_elf, &section_table, i, &result->strings, &current);
+    read_section_details(whole_elf, &section_table, i, &result->strings,
+                         &current);
     if ((!strcmp(current.name, ".note.stapsdt") && current.type == 7) ||
        (!strcmp(current.name, "__note_stapsdt") )) {
       result->stapsdt = current;
@@ -104,7 +110,8 @@ static int get_main_sections(struct whole_elf *whole_elf,
   return 0;
 };
 
-int parse_arguments(struct probe_note *note, char *argstring) {
+int parse_arguments(struct probe_note *note, char *argstring)
+{
   int n = strlen(argstring);
   int count = 0;
   if(n>0) ++count;
@@ -134,7 +141,8 @@ int parse_arguments(struct probe_note *note, char *argstring) {
   return 0;
 }
 
-int read_notes(char *filename, struct probe_notes *result) {
+int read_notes(char *filename, struct probe_notes *result)
+{
   struct whole_elf whole_elf =
     { .size = 0,
       .data = NULL,
@@ -170,7 +178,8 @@ int read_notes(char *filename, struct probe_notes *result) {
   while(offset < ms.stapsdt.size) {
     if (num_notes >= len_notes) {
       len_notes = (len_notes == 0? 64 : len_notes * 2);
-      notes = (struct probe_note **) realloc(notes, sizeof(struct probe_note *) * len_notes);
+      notes = (struct probe_note **)
+        realloc(notes, sizeof(struct probe_note *) * len_notes);
       if (!notes) {
         // we could just return what was read so far, instead of failing.
         fprintf(stderr, "could not allocate space for all notes.\n");
@@ -206,7 +215,7 @@ int read_notes(char *filename, struct probe_notes *result) {
     current->offset = *(__u64*)data;
     current->semaphore = *(__u64*)(data+0x10);
     char *provider = data+0x18;
-    // CR rcummings: do something with provider, like check if it is 'ocaml'
+    // CR-soon rcummings: do something with provider, check if it is 'ocaml'
     char *name = provider + strlen(provider) + 1;
     size_t name_len = strlen(name);
     current->name = malloc(name_len+1);
