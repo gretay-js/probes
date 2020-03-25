@@ -472,10 +472,6 @@ CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid)
 CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
                                        value v_name, value v_enable)
 {
-  // This function doesn't allocate on ocaml heap when successful,
-  // but [set_all] may raise, which involves
-  // allocating the explanation string on ocaml heap, so
-  // we still need to register these values with the GC.
   CAMLparam2(v_internal, v_name);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
@@ -507,10 +503,6 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
 CAMLprim value caml_probes_lib_set_all (value v_internal, value v_pid,
                                         value v_enable)
 {
-  // This function doesn't allocate on ocaml heap when successful,
-  // but [set_all] may raise, which involves
-  // allocating the explanation string on ocaml heap, so
-  // we still need to register these values with the GC.
   CAMLparam1(v_internal);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
