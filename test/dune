@@ -2,6 +2,6 @@
  (name probes_lib_test)
  (modules probes_lib_test)
  (libraries probes-lib core)
- (inline_tests)
+ (inline_tests (deps tracee/test.exe))
  (preprocess (pps ppx_inline_test)))
 
