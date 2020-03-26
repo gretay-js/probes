@@ -294,7 +294,7 @@ static inline void update_probe(pid_t cpid, struct probe_note *note,
 
 static inline void set_all (struct probe_notes *notes, pid_t cpid, int enable)
 {
-  for (int i = 0; i < notes->num_probes; i++) {
+  for (size_t i = 0; i < notes->num_probes; i++) {
       update_probe(cpid, notes->probe_notes[i], enable);
   }
 }
@@ -421,7 +421,7 @@ static struct custom_operations probe_notes_ops = {
 CAMLprim value caml_probes_lib_read_notes (value v_filename)
 {
   CAMLparam1(v_filename);
-  char *filename = String_val(v_filename);
+  const char *filename = String_val(v_filename);
 
   struct probe_notes *res = malloc(sizeof(struct probe_notes));
   if(read_notes(filename, res)) {
@@ -444,7 +444,7 @@ CAMLprim value caml_probes_lib_get_names (value v_internal)
   struct probe_notes *notes = Probe_notes_val(v_internal);
   size_t n = notes->num_probes;
   v_names = caml_alloc(n,0);
-  for (int i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     v_name = caml_copy_string(notes->probe_notes[i]->name);
     Store_field(v_names, i, v_name);
   }
@@ -461,7 +461,7 @@ CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid)
   size_t n = notes->num_probes;
   v_states = caml_alloc(n,0);
   int b;
-  for (int i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     b = get_semaphore(cpid, notes->probe_notes[i]);
     Store_field(v_states, i, Val_bool(b));
   }
@@ -474,7 +474,7 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
   CAMLparam2(v_internal, v_name);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
-  char *name = String_val(v_name);
+  const char *name = String_val(v_name);
   struct probe_notes *notes = Probe_notes_val(v_internal);
   // CR-soon gyorsh: update by index, not name, to avoid scanning probe_notes
   // array for each name.
@@ -485,7 +485,7 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
   // It matter if there are many probes that are enabled/disabled often while
   // the tracer remains attached (i.e., use  seize + interrupt
   // instead of traceme/attach ptrace calls).
-  for (int i = 0; i < notes->num_probes; i++) {
+  for (size_t i = 0; i < notes->num_probes; i++) {
     bool found = false;
     if (!strcmp(name, notes->probe_notes[i]->name)) {
       found = true;

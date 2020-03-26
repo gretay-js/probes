@@ -23,6 +23,6 @@ struct probe_notes {
   struct probe_note **probe_notes;
 };
 
-int read_notes(char *file, struct probe_notes *result);
+int read_notes(const char *file, struct probe_notes *result);
 
 // CR-soon rcummings: need functions to conveniently free these structs
