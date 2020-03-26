@@ -108,7 +108,7 @@ static int get_main_sections(struct whole_elf *whole_elf,
     return 1;
   }
   return 0;
-};
+}
 
 int parse_arguments(struct probe_note *note, char *argstring)
 {

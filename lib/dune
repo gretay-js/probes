@@ -5,5 +5,5 @@
  (foreign_stubs
   (language c)
   (names read_note stubs)
-  (flags -O3 -std=c11 -D_GNU_SOURCE -I. -g -Wall))
+  (flags -O3 -std=c11 -DCAML_NAME_SPACE -D_GNU_SOURCE -I. -g -Wall -pedantic))
  )

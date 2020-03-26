@@ -142,7 +142,6 @@ static inline long ptrace_set_data(pid_t pid, void *addr, void *data)
 #include <sys/wait.h>
 #include "read_note.h"
 
-#define CAML_NAME_SPACE
 #include <caml/fail.h>
 #include <caml/callback.h>
 #include <caml/mlvalues.h>
