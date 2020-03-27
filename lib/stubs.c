@@ -460,19 +460,26 @@ CAMLprim value caml_probes_lib_get_names (value v_internal)
   CAMLreturn(v_names);
 }
 
-CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid)
+CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid,
+                                           value v_names)
 {
-  CAMLparam1(v_internal);
+  CAMLparam2(v_internal, v_names);
   CAMLlocal1(v_states);
   pid_t cpid = Long_val(v_pid);
-
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  size_t n = notes->num_probes;
+  int n = Wosize_val(v_names);
   v_states = caml_alloc(n,0);
   int b;
-  for (size_t i = 0; i < n; i++) {
-    b = get_semaphore(cpid, notes->probe_notes[i]);
-    Store_field(v_states, i, Val_bool(b));
+  for (int i = 0; i < n; i++) {
+    const char *name = String_val(Field(v_names, i));
+    for (size_t i = 0; i < notes->num_probes; i++) {
+      struct probe_note *note = notes->probe_notes[i];
+      if (!strcmp(name, note->name)) {
+        b = get_semaphore(cpid, note);
+        Store_field(v_states, i, Val_bool(b));
+        break;
+      }
+    }
   }
   CAMLreturn(v_states);
 }
