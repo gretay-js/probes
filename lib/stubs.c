@@ -285,17 +285,26 @@ static inline int get_semaphore(pid_t cpid, struct probe_note *note)
   return is_enabled(data);
 }
 
-static inline void update_probe(pid_t cpid, struct probe_note *note,
-                                bool enable)
-{
-  if (modify_semaphore(cpid, enable, note->semaphore))
-    modify_probe(cpid, note->offset, enable);
-}
 
-static inline void set_all (struct probe_notes *notes, pid_t cpid, int enable)
+static inline void update_probe(struct probe_notes *notes, pid_t cpid,
+                                 const char *name, int enable)
 {
+  bool found = false;
+  bool change = false;
   for (size_t i = 0; i < notes->num_probes; i++) {
-      update_probe(cpid, notes->probe_notes[i], enable);
+    struct probe_note *note = notes->probe_notes[i];
+    if (!strcmp(name, note->name)) {
+      if (!found) {
+        found = true;
+        change = modify_semaphore(cpid, enable, note->semaphore);
+      }
+      if (change)
+        modify_probe(cpid, note->offset, enable);
+    }
+    if (!found)
+      if (verbose)
+        fprintf(stderr, "update probe failed: probe named %s is not found\n",
+                    name);
   }
 }
 
@@ -485,52 +494,57 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
   // It matter if there are many probes that are enabled/disabled often while
   // the tracer remains attached (i.e., use  seize + interrupt
   // instead of traceme/attach ptrace calls).
-  for (size_t i = 0; i < notes->num_probes; i++) {
-    bool found = false;
-    if (!strcmp(name, notes->probe_notes[i]->name)) {
-      found = true;
-      update_probe(cpid, notes->probe_notes[i], enable);
-    }
-    if (!found)
-      if (verbose)
-        fprintf(stderr, "update probe failed: probe named %s is not found\n",
-                    name);
-  }
+  update_probe(notes, cpid, name, enable);
   CAMLreturn(Val_unit);
 }
 
 CAMLprim value caml_probes_lib_set_all (value v_internal, value v_pid,
+                                        value v_names,
                                         value v_enable)
 {
-  CAMLparam1(v_internal);
+  CAMLparam2(v_internal, v_names);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  set_all(notes, cpid, enable);
+  int n = Wosize_val(v_names);
+  for (int i = 0; i < n; i++) {
+    const char *name = String_val(Field(v_names, i));
+    update_probe(notes, cpid, name, enable);
+  }
   CAMLreturn(Val_unit);
 }
 
 CAMLprim value caml_probes_lib_attach_set_all_detach (value v_internal,
                                                       value v_pid,
+                                                      value v_names,
                                                       value v_enable)
 {
-  CAMLparam1(v_internal);
+  CAMLparam2(v_internal, v_names);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
   struct probe_notes *notes = Probe_notes_val(v_internal);
   attach(cpid);
-  set_all(notes, cpid, enable);
+  int n = Wosize_val(v_names);
+  for (int i = 0; i < n; i++) {
+    const char *name = String_val(Field(v_names, i));
+    update_probe(notes, cpid, name, enable);
+  }
   detach(cpid);
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value caml_probes_lib_trace_all (value v_internal, value v_argv)
+CAMLprim value caml_probes_lib_trace_all (value v_internal, value v_argv,
+                                          value v_names)
 {
-  CAMLparam2(v_internal,v_argv);
+  CAMLparam3(v_internal,v_argv,v_names);
   value v_pid = caml_probes_lib_start(v_argv);
   struct probe_notes *notes = Probe_notes_val(v_internal);
   pid_t cpid = Long_val(v_pid);
-  set_all(notes, cpid, true);
+  int n = Wosize_val(v_names);
+  for (int i = 0; i < n; i++) {
+    const char *name = String_val(Field(v_names, i));
+    update_probe(notes, cpid, name, true);
+  }
   detach(cpid);
   CAMLreturn(Val_unit);
 }

@@ -10,6 +10,8 @@ type internal
 (** custom block, includes information such as probe offset, semaphore
     offset, and the location of arguments for the bpf handler. *)
 
+type probe_name = string
+
 external stub_start : argv:string array -> pid = "caml_probes_lib_start"
 
 external stub_attach : pid -> unit = "caml_probes_lib_attach"
@@ -19,27 +21,28 @@ external stub_detach : pid -> unit = "caml_probes_lib_detach"
 external stub_read_notes : elf_filename:string -> internal
   = "caml_probes_lib_read_notes"
 
-external stub_get_names : internal -> string array
+external stub_get_names : internal -> probe_name array
   = "caml_probes_lib_get_names"
 
-external stub_get_states : internal -> pid -> bool array
+external stub_get_states : internal -> pid -> probe_name array -> bool array
   = "caml_probes_lib_get_states"
 
-external stub_set_all : internal -> pid -> enable:bool -> unit
+external stub_set_all :
+  internal -> pid -> probe_name array -> enable:bool -> unit
   = "caml_probes_lib_set_all"
 
-external stub_set_one : internal -> pid -> name:string -> enable:bool -> unit
+external stub_set_one : internal -> pid -> probe_name -> enable:bool -> unit
   = "caml_probes_lib_update"
 
-external stub_trace_all : internal -> argv:string array -> unit
+external stub_trace_all :
+  internal -> argv:string array -> probe_name array -> unit
   = "caml_probes_lib_trace_all"
 
-external stub_attach_set_all_detach : internal -> pid -> enable:bool -> unit
+external stub_attach_set_all_detach :
+  internal -> pid -> probe_name array -> enable:bool -> unit
   = "caml_probes_lib_attach_set_all_detach"
 
 external stub_verbose : bool -> unit = "caml_probes_lib_set_verbose"
-
-type probe_name = string
 
 type probe_desc =
   { name : probe_name;
@@ -62,7 +65,7 @@ type t =
   { mutable pid : prog_status;
     prog : string;
     bpf : bool;
-    probe_names : string array;
+    probe_names : probe_name array;
     internal : internal  (** probe details *)
   }
 
@@ -85,7 +88,13 @@ let create ~prog ~bpf =
   if bpf then user_error "Not implemented: bpf";
   if !verbose then Printf.printf "create: read probe notes from %s\n" prog;
   let internal = stub_read_notes ~elf_filename:prog in
-  let probe_names = stub_get_names internal in
+  let probe_names =
+    stub_get_names internal
+    (* dedup *)
+    |> Array.to_list
+    |> List.sort_uniq String.compare
+    |> Array.of_list
+  in
   if !verbose then
     Array.iteri (fun i name -> Printf.printf "%d:%s\n" i name) probe_names;
   { pid = Not_attached; prog; bpf; probe_names; internal }
@@ -157,11 +166,11 @@ let update t ~actions =
       | All action ->
           if !verbose then
             Printf.printf "stub_set_all %d %b\n" pid (enable action);
-          stub_set_all t.internal pid ~enable:(enable action)
+          stub_set_all t.internal pid t.probe_names ~enable:(enable action)
       | Selected l ->
           List.iter
             (fun (action, name) ->
-              stub_set_one t.internal pid ~name ~enable:(enable action))
+              stub_set_one t.internal pid name ~enable:(enable action))
             l )
 
 (* Reads the value of probe semaphores in current process's memory. An
@@ -176,7 +185,7 @@ let get_probe_states t =
       Array.map2
         (fun name enabled -> { name; enabled })
         t.probe_names
-        (stub_get_states t.internal pid)
+        (stub_get_states t.internal pid t.probe_names)
 
 (* We use PTRACE_DETACH and not PTRACE_CONT: After sending PTRACE_CONT signal
    to the child process, the parent needs to stop the child process again to
@@ -213,7 +222,7 @@ let trace_all t ~prog ~args =
   | Not_attached ->
       if !verbose then
         Printf.printf "stub_trace_all %s\n" (String.concat " " argv);
-      stub_trace_all t.internal ~argv:(Array.of_list argv)
+      stub_trace_all t.internal ~argv:(Array.of_list argv) t.probe_names
 
 let attach_update_all_detach t pid ~enable =
   match t.pid with
@@ -226,4 +235,4 @@ let attach_update_all_detach t pid ~enable =
   | Not_attached ->
       if !verbose then
         Printf.printf "stub_attach_set_all_detach %d %b\n" pid enable;
-      stub_attach_set_all_detach t.internal pid ~enable
+      stub_attach_set_all_detach t.internal pid t.probe_names ~enable
