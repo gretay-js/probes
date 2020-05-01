@@ -200,7 +200,7 @@ static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable)
   unsigned long cur;
   unsigned long new;
   errno = 0;
-  addr = addr - 5;
+  addr = addr + 1;
   data = ptrace_get_text(cpid, (void *) addr);
   if (errno != 0) {
     signal_and_error(cpid,
@@ -268,9 +268,10 @@ static inline bool modify_semaphore(pid_t cpid, bool enable,
   return (is_enabled(cur_data) != is_enabled(new_data));
 }
 
-static inline int get_semaphore(pid_t cpid, struct probe_note *note)
+static inline int get_semaphore(pid_t cpid, struct probe_note *note,
+                                unsigned long data_seg_start)
 {
-  unsigned long addr = note->semaphore;
+  unsigned long addr = data_seg_start + note->semaphore;
   errno = 0;
   signed long data = ptrace_get_data(cpid, (void *) addr);
   if (errno != 0) {
@@ -287,7 +288,9 @@ static inline int get_semaphore(pid_t cpid, struct probe_note *note)
 
 
 static inline void update_probe(struct probe_notes *notes, pid_t cpid,
-                                 const char *name, int enable)
+                                const char *name, int enable,
+                                unsigned long text_seg_start,
+                                unsigned long data_seg_start)
 {
   bool found = false;
   bool change = false;
@@ -296,10 +299,11 @@ static inline void update_probe(struct probe_notes *notes, pid_t cpid,
     if (!strcmp(name, note->name)) {
       if (!found) {
         found = true;
-        change = modify_semaphore(cpid, enable, note->semaphore);
+        change = modify_semaphore(cpid, enable,
+                                  data_seg_start + note->semaphore);
       }
       if (change)
-        modify_probe(cpid, note->offset, enable);
+        modify_probe(cpid, text_seg_start + note->offset, enable);
     }
     if (!found)
       if (verbose)
@@ -369,6 +373,19 @@ static inline void detach (pid_t cpid)
 /*  OCaml interface: manipulate ocaml values, mind the GC,
     and call regular C functions */
 
+static inline void extract_mmap (value v_mmap,
+                                 unsigned long *text,
+                                 unsigned long *data)
+{
+  if (Long_val(v_mmap) == 1)
+    raise_error ("Missing memory map for your pie");
+  value v = Field(v_mmap, 0);
+  *text = Int64_val(Field(v, 0));
+  *data = Int64_val(Field(v, 1));
+  if (verbose)
+    fprintf(stderr, "extract_mmap: text=%lx; data=%lx\n", *text, *data);
+}
+
 CAMLprim value caml_probes_lib_start (value v_argv)
 {
   CAMLparam1(v_argv); /* string array */
@@ -430,20 +447,22 @@ static struct custom_operations probe_notes_ops = {
 CAMLprim value caml_probes_lib_read_notes (value v_filename)
 {
   CAMLparam1(v_filename);
+  CAMLlocal1(v_internal);
   const char *filename = String_val(v_filename);
 
   struct probe_notes *res = malloc(sizeof(struct probe_notes));
+  if (!res) raise_error ("could not allocate probe notes");
   if(read_notes(filename, res)) {
     free(res);
-    raise_error ("could not parse probe notes from %s\n", filename);
+    raise_error("could not parse probe notes", filename);
   }
 
   /* Allocating an OCaml custom block to hold the notes */
-  value v_internal = caml_alloc_custom(&probe_notes_ops,
-                                       sizeof(struct probe_notes *), 0, 1);
+  v_internal = caml_alloc_custom(&probe_notes_ops,
+                                 sizeof(struct probe_notes *), 0, 1);
   Probe_notes_val(v_internal) = res;
   CAMLreturn(v_internal);
-}
+ }
 
 CAMLprim value caml_probes_lib_get_names (value v_internal)
 {
@@ -460,13 +479,18 @@ CAMLprim value caml_probes_lib_get_names (value v_internal)
   CAMLreturn(v_names);
 }
 
-CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid,
+CAMLprim value caml_probes_lib_get_states (value v_internal,
+                                           value v_pid,
+                                           value v_mmap,
                                            value v_names)
 {
-  CAMLparam2(v_internal, v_names);
+  CAMLparam3(v_internal, v_names, v_mmap);
   CAMLlocal1(v_states);
   pid_t cpid = Long_val(v_pid);
   struct probe_notes *notes = Probe_notes_val(v_internal);
+  unsigned long text_seg_start = 0;
+  unsigned long data_seg_start = 0;
+  if (notes->pie) extract_mmap(v_mmap, &text_seg_start, &data_seg_start);
   int n = Wosize_val(v_names);
   v_states = caml_alloc(n,0);
   int b;
@@ -475,7 +499,7 @@ CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid,
     for (size_t i = 0; i < notes->num_probes; i++) {
       struct probe_note *note = notes->probe_notes[i];
       if (!strcmp(name, note->name)) {
-        b = get_semaphore(cpid, note);
+        b = get_semaphore(cpid, note, data_seg_start);
         Store_field(v_states, i, Val_bool(b));
         break;
       }
@@ -484,14 +508,20 @@ CAMLprim value caml_probes_lib_get_states (value v_internal, value v_pid,
   CAMLreturn(v_states);
 }
 
-CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
-                                       value v_name, value v_enable)
+CAMLprim value caml_probes_lib_update (value v_internal,
+                                       value v_pid,
+                                       value v_mmap,
+                                       value v_name,
+                                       value v_enable)
 {
-  CAMLparam2(v_internal, v_name);
+  CAMLparam3(v_internal, v_name, v_mmap);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
   const char *name = String_val(v_name);
   struct probe_notes *notes = Probe_notes_val(v_internal);
+  unsigned long text_seg_start = 0;
+  unsigned long data_seg_start = 0;
+  if (notes->pie) extract_mmap(v_mmap, &text_seg_start, &data_seg_start);
   // CR-soon gyorsh: update by index, not name, to avoid scanning probe_notes
   // array for each name.
   // For it to be efficient, avoid multiple calls to this stub (a call per index
@@ -501,22 +531,27 @@ CAMLprim value caml_probes_lib_update (value v_internal, value v_pid,
   // It matter if there are many probes that are enabled/disabled often while
   // the tracer remains attached (i.e., use  seize + interrupt
   // instead of traceme/attach ptrace calls).
-  update_probe(notes, cpid, name, enable);
+  update_probe(notes, cpid, name, enable, text_seg_start, data_seg_start);
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value caml_probes_lib_set_all (value v_internal, value v_pid,
+CAMLprim value caml_probes_lib_set_all (value v_internal,
+                                        value v_pid,
+                                        value v_mmap,
                                         value v_names,
                                         value v_enable)
 {
-  CAMLparam2(v_internal, v_names);
+  CAMLparam3(v_internal, v_names, v_mmap);
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
   struct probe_notes *notes = Probe_notes_val(v_internal);
+  unsigned long text_seg_start = 0;
+  unsigned long data_seg_start = 0;
+  if (notes->pie) extract_mmap(v_mmap, &text_seg_start, &data_seg_start);
   int n = Wosize_val(v_names);
   for (int i = 0; i < n; i++) {
     const char *name = String_val(Field(v_names, i));
-    update_probe(notes, cpid, name, enable);
+    update_probe(notes, cpid, name, enable, text_seg_start, data_seg_start);
   }
   CAMLreturn(Val_unit);
 }
@@ -530,11 +565,12 @@ CAMLprim value caml_probes_lib_attach_set_all_detach (value v_internal,
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
   struct probe_notes *notes = Probe_notes_val(v_internal);
+  if (notes->pie) raise_error ("Missing memory map for your pie");
   attach(cpid);
   int n = Wosize_val(v_names);
   for (int i = 0; i < n; i++) {
     const char *name = String_val(Field(v_names, i));
-    update_probe(notes, cpid, name, enable);
+    update_probe(notes, cpid, name, enable, 0, 0);
   }
   detach(cpid);
   CAMLreturn(Val_unit);
@@ -546,18 +582,40 @@ CAMLprim value caml_probes_lib_trace_all (value v_internal, value v_argv,
   CAMLparam3(v_internal,v_argv,v_names);
   value v_pid = caml_probes_lib_start(v_argv);
   struct probe_notes *notes = Probe_notes_val(v_internal);
+  if (notes->pie) raise_error ("Missing memory map for your pie");
   pid_t cpid = Long_val(v_pid);
   int n = Wosize_val(v_names);
   for (int i = 0; i < n; i++) {
     const char *name = String_val(Field(v_names, i));
-    update_probe(notes, cpid, name, true);
+    update_probe(notes, cpid, name, true, 0, 0);
   }
   detach(cpid);
   CAMLreturn(Val_unit);
 }
 
+
+CAMLprim value caml_probes_lib_pie (value v_internal)
+{
+  struct probe_notes *notes = Probe_notes_val(v_internal);
+  return Val_bool(notes->pie);
+}
+
+
 CAMLprim value caml_probes_lib_set_verbose(value v_bool)
 {
   verbose = Bool_val(v_bool);
   return Val_unit;
+}
+
+
+CAMLprim value caml_probes_lib_realpath(value v_filename)
+{
+  CAMLparam1(v_filename);
+  const char *filename = String_val(v_filename);
+  char *res = realpath(filename, NULL);
+  if (res == NULL)
+    raise_error ("could not get realpath of %s\n", filename);
+  value v_res = caml_copy_string(res);
+  free(res);
+  CAMLreturn(v_res);
 }

@@ -21,6 +21,7 @@ struct probe_note {
 struct probe_notes {
   size_t num_probes;
   struct probe_note **probe_notes;
+  bool pie;
 };
 
 int read_notes(const char *file, struct probe_notes *result);

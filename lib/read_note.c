@@ -19,6 +19,7 @@ typedef uint64_t __u64;
 struct whole_elf {
   size_t size;
   char *data;
+  bool pie;
 };
 
 static void destroy(struct whole_elf *whole_elf) {
@@ -70,12 +71,22 @@ struct main_sections {
   struct section strings;
 };
 
+#define ET_EXEC 2
+#define ET_DYN  3
 static int get_main_sections(struct whole_elf *whole_elf,
                       struct main_sections *result) {
   if(whole_elf->data[4]!=2) {
     fprintf(stderr, "elf not in 64-bit format\n");
     return 1;
   }
+  __u16 e_type = *(__u16*)(whole_elf->data+16);
+  switch (e_type) {
+  case ET_EXEC: whole_elf->pie = false; break;
+  case ET_DYN:  whole_elf->pie = true;  break;
+  default:
+    fprintf(stderr, "unexpected type of elf executable %d", e_type);
+    return 1;
+  };
   struct section_table section_table =
     { .offset = *(__u64*)(whole_elf->data+0x28),
       .entry_size =  *(__u8*)(whole_elf->data+0x3A),
@@ -146,6 +157,7 @@ int read_notes(const char *filename, struct probe_notes *result)
   struct whole_elf whole_elf =
     { .size = 0,
       .data = NULL,
+      .pie = false,
     };
   { // one pass to count bytes, another to copy them
     FILE *file = fopen(filename, "r");
@@ -170,6 +182,7 @@ int read_notes(const char *filename, struct probe_notes *result)
     fprintf(stderr, "error getting main sections\n");
     goto error1;
   }
+  result->pie = whole_elf.pie;
   char *data = section_data(&whole_elf, &ms.stapsdt);
   size_t offset = 0;
   struct probe_note **notes = NULL;
