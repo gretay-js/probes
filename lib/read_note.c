@@ -29,11 +29,12 @@ static void destroy(struct whole_elf *whole_elf) {
 }
 
 struct section {
-  size_t offset;
-  size_t size;
-  size_t type;
-  size_t entsize;
-  size_t index;
+  __u64 addr;
+  __u64 offset;
+  __u64 size;
+  __u32 type;
+  /* __u64 entsize; */
+  /* __u32 index; */
   char *name;
 };
 
@@ -57,22 +58,27 @@ static int read_section_details(struct whole_elf *whole_elf,
   char *base = whole_elf->data + section_table->offset +
     index * section_table->entry_size;
   size_t name_offset = *(__u32*)base;
+  result->addr = *(__u64*)(base+0x10);
   result->offset = *(__u64*)(base+0x18);
-  result->size = *(__u64*)(base+0x20);
+  result->size = *(__u32*)(base+0x20);
   result->type = *(__u32*)(base+0x04);
-  result->entsize = *(__u64*)(base+0x38);
+  /* result->entsize = *(__u32*)(base+0x38); */
   result->name = section_data(whole_elf, strings) + name_offset;
-  result->index = index;
+  /* result->index = index; */
   return 0;
 }
 
 struct main_sections {
   struct section stapsdt;
   struct section strings;
+  struct section text;
+  struct section data;
 };
 
 #define ET_EXEC 2
 #define ET_DYN  3
+#define SHT_PROGBITS 1
+#define SHT_NOTE 7
 static int get_main_sections(struct whole_elf *whole_elf,
                       struct main_sections *result) {
   if(whole_elf->data[4]!=2) {
@@ -101,10 +107,12 @@ static int get_main_sections(struct whole_elf *whole_elf,
                        &result->strings, &result->strings);
   struct section current;
   bool found_stapsdt = false;
+  bool found_text = false;
+  bool found_data = false;
   for(size_t i = 0; i<section_table.num_headers; ++i) {
     read_section_details(whole_elf, &section_table, i, &result->strings,
                          &current);
-    if ((!strcmp(current.name, ".note.stapsdt") && current.type == 7) ||
+    if ((!strcmp(current.name, ".note.stapsdt") && current.type == SHT_NOTE) ||
        (!strcmp(current.name, "__note_stapsdt") )) {
       result->stapsdt = current;
       if(found_stapsdt) {
@@ -113,9 +121,32 @@ static int get_main_sections(struct whole_elf *whole_elf,
       }
       found_stapsdt = true;
     }
+    else if (!strcmp(current.name, ".text") && current.type == SHT_PROGBITS) {
+      result->text = current;
+      if(found_text) {
+        fprintf(stderr, "duplicate .text sections\n");
+        return 1;
+      }
+      found_text = true;
+    } else if (!strcmp(current.name, ".data") && current.type == SHT_PROGBITS) {
+      result->data = current;
+      if(found_data) {
+        fprintf(stderr, "duplicate .data sections\n");
+        return 1;
+      }
+      found_data = true;
+    }
   }
   if(!found_stapsdt) {
     fprintf(stderr, "stapsdt note section not found\n");
+    return 1;
+  }
+  if(!found_text) {
+    fprintf(stderr, "text section not found\n");
+    return 1;
+  }
+  if(!found_data) {
+    fprintf(stderr, "data section not found\n");
     return 1;
   }
   return 0;
@@ -177,12 +208,26 @@ int read_notes(const char *filename, struct probe_notes *result)
     for(size_t i=0; (c=fgetc(file))!=EOF; ++i) whole_elf.data[i] = c;
     fclose(file);
   }
-  struct main_sections ms;
+  // initialize just to suppress warnings
+  struct main_sections ms = {.stapsdt = {0},
+                             .strings = {0},
+                             .text = {0},
+                             .data = {0}};
   if(get_main_sections(&whole_elf, &ms)) {
     fprintf(stderr, "error getting main sections\n");
     goto error1;
   }
   result->pie = whole_elf.pie;
+  result->text_addr = ms.text.addr;
+  result->text_offset = ms.text.offset;
+  result->data_addr = ms.data.addr;
+  result->data_offset = ms.data.offset;
+  unsigned long text_start = ms.text.addr;
+  unsigned long text_finish = ms.text.addr+ms.text.size;
+  unsigned long data_start = ms.data.addr;
+  unsigned long data_finish = ms.data.addr+ms.data.size;
+  /* fprintf (stderr, "text section: (%lx,%lx)", text_start, text_finish);
+   * fprintf (stderr, "data section: (%lx,%lx)", data_start, data_finish); */
   char *data = section_data(&whole_elf, &ms.stapsdt);
   size_t offset = 0;
   struct probe_note **notes = NULL;
@@ -226,7 +271,20 @@ int read_notes(const char *filename, struct probe_notes *result)
     notes[num_notes] = current;
     ++num_notes;
     current->offset = *(__u64*)data;
+    if (!((text_start <= current->offset) &&
+          (current->offset <= text_finish))) {
+      fprintf (stderr, "probe offset outside of .text section: %lx\n",
+               current->offset);
+      goto error2;
+    }
     current->semaphore = *(__u64*)(data+0x10);
+    if ((current->semaphore == 0) // no semaphore
+       || !((data_start <= current->semaphore) &&
+            (current->semaphore <= data_finish))) {
+      fprintf (stderr, "probe semaphore's offset is missing or outside"
+               "of .data section: %lx\n", current->offset);
+      goto error2;
+    }
     char *provider = data+0x18;
     // CR-soon rcummings: do something with provider, check if it is 'ocaml'
     char *name = provider + strlen(provider) + 1;

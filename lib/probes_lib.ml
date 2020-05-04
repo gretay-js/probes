@@ -12,12 +12,6 @@ type internal
 
 type probe_name = string
 
-(** Start addresses of the segments *)
-type mmap =
-  { text : int64;
-    data : int64
-  }
-
 external stub_realpath : string -> string = "caml_probes_lib_realpath"
 
 external stub_start : argv:string array -> pid = "caml_probes_lib_start"
@@ -35,15 +29,15 @@ external stub_get_names : internal -> probe_name array
 external stub_pie : internal -> bool = "caml_probes_lib_pie" [@@noalloc]
 
 external stub_get_states :
-  internal -> pid -> mmap option -> probe_name array -> bool array
+  internal -> pid -> Mmap.t option -> probe_name array -> bool array
   = "caml_probes_lib_get_states"
 
 external stub_set_all :
-  internal -> pid -> mmap option -> probe_name array -> enable:bool -> unit
+  internal -> pid -> Mmap.t option -> probe_name array -> enable:bool -> unit
   = "caml_probes_lib_set_all"
 
 external stub_set_one :
-  internal -> pid -> mmap option -> probe_name -> enable:bool -> unit
+  internal -> pid -> Mmap.t option -> probe_name -> enable:bool -> unit
   = "caml_probes_lib_update"
 
 external stub_trace_all :
@@ -71,7 +65,7 @@ type actions =
 
 type process =
   { id : pid;
-    mmap : mmap option
+    mmap : Mmap.t option
         (** Some memory map for a position independent executable, None
             otherwise *)
   }
@@ -94,6 +88,7 @@ let verbose = ref false
 let set_verbose b =
   verbose := b;
   stub_verbose b;
+  Mmap.verbose := b;
   ()
 
 let user_error fmt =
@@ -125,82 +120,12 @@ let create ~prog ~bpf =
     Array.iteri (fun i name -> Printf.printf "%d:%s\n" i name) probe_names;
   { status = Not_attached; prog; bpf; probe_names; pie; internal }
 
-(* Read memory map of pid from /proc/pid/maps file, parse it, and find the
-   offset of text and data sections of prog. The tracer must be attach to the
-   process and the process must be stopped. *)
-let read_mmap pid prog =
-  let filename = "/proc/" ^ string_of_int pid ^ "/maps" in
-  let oc = open_in filename in
-  let text = ref None in
-  let data = ref None in
-  let update p s =
-    match Int64.of_string_opt ("0x" ^ s) with
-    | None ->
-        raise
-          (Error (Printf.sprintf "Unexpected format of %s: %s" filename s))
-    | Some _ as a -> (
-        match !p with
-        | None -> p := a
-        | Some _ ->
-            raise
-              (Error
-                 (Printf.sprintf
-                    "Unexpected format of %s: duplicate segment at %s"
-                    filename s)) )
-  in
-  let parse line =
-    (* parse lines in the format: start-end rwxp offset xx:yy fd name *)
-    if !verbose then Printf.printf "[mmap] %s" line;
-    let len_line = String.length line in
-    let len_prog = String.length prog in
-    if len_line < len_prog then ()
-    else
-      let name = String.sub line (len_line - len_prog) len_prog in
-      if !verbose then Printf.printf "%s\nname:%s\n" line name;
-      if String.equal prog name then
-        match (String.index_opt line '-', String.index_opt line ' ') with
-        | None, _ | _, None ->
-            raise
-              (Error
-                 (Printf.sprintf "Unexpectedd format of %s:\n%s" filename
-                    line))
-        | Some i, Some j -> (
-            let start = String.sub line 0 i in
-            let perm = String.sub line (j + 1) 4 in
-            if !verbose then Printf.printf "start:%s\nperm=%s\n" start perm;
-            match perm with
-            | "r-xp" -> update text start
-            | "rw-p" -> update data start
-            | _ -> () )
-  in
-  ( try
-      while true do
-        parse (input_line oc)
-      done
-    with
-  | End_of_file -> close_in oc
-  | e ->
-      close_in oc;
-      raise e );
-  match (!text, !data) with
-  | Some text, Some data -> { text; data }
-  | None, _ ->
-      raise
-        (Error
-           (Printf.sprintf
-              "Unexpected format of %s: missing text segment start" filename))
-  | _, None ->
-      raise
-        (Error
-           (Printf.sprintf
-              "Unexpected format of %s: missing data segment start" filename))
-
 (* Updates [t.status] after stub to ensure stub didn't raise *)
 let set_status t id =
   let mmap =
     match t.pie with
     | false -> None
-    | true -> Some (read_mmap id t.prog)
+    | true -> Some (Mmap.read ~pid:id ~filename:t.prog)
   in
   t.status <- Attached { id; mmap }
 

@@ -238,8 +238,9 @@ static inline bool is_enabled(signed long data)
 }
 
 // returns true if and only if "is_enabled" state changes
-static inline bool modify_semaphore(pid_t cpid, bool enable,
-                                            unsigned long addr)
+static inline bool modify_semaphore(pid_t cpid,
+                                    bool enable,
+                                    unsigned long addr)
 {
   errno = 0;
   signed long cur_data = ptrace_get_data(cpid, (void *) addr);
@@ -268,16 +269,14 @@ static inline bool modify_semaphore(pid_t cpid, bool enable,
   return (is_enabled(cur_data) != is_enabled(new_data));
 }
 
-static inline int get_semaphore(pid_t cpid, struct probe_note *note,
-                                unsigned long data_seg_start)
+static inline int get_semaphore(pid_t cpid, unsigned long addr)
 {
-  unsigned long addr = data_seg_start + note->semaphore;
   errno = 0;
   signed long data = ptrace_get_data(cpid, (void *) addr);
   if (errno != 0) {
-    signal_and_error(cpid, "is_enabled probe %s in pid %d: "
+    signal_and_error(cpid, "is_enabled probe in pid %d: "
                      "failed to PEEKDATA at %lx with errno %d\n",
-                     note->name, cpid, addr, errno);
+                     cpid, addr, errno);
   }
   if (verbose) fprintf (stderr, "semaphore at %lx = %lx\n", addr, data);
   if (data < 0)
@@ -289,8 +288,8 @@ static inline int get_semaphore(pid_t cpid, struct probe_note *note,
 
 static inline void update_probe(struct probe_notes *notes, pid_t cpid,
                                 const char *name, int enable,
-                                unsigned long text_seg_start,
-                                unsigned long data_seg_start)
+                                unsigned long text_offset,
+                                unsigned long data_offset)
 {
   bool found = false;
   bool change = false;
@@ -299,11 +298,14 @@ static inline void update_probe(struct probe_notes *notes, pid_t cpid,
     if (!strcmp(name, note->name)) {
       if (!found) {
         found = true;
-        change = modify_semaphore(cpid, enable,
-                                  data_seg_start + note->semaphore);
+        if (!note->semaphore) raise_error("Semaphore not found for %s", name);
+        unsigned long addr = data_offset + note->semaphore;
+        change = modify_semaphore(cpid, enable, addr);
       }
-      if (change)
-        modify_probe(cpid, text_seg_start + note->offset, enable);
+      if (change) {
+        unsigned long addr = text_offset + note->offset;
+        modify_probe(cpid, addr, enable);
+      }
     }
     if (!found)
       if (verbose)
@@ -373,17 +375,68 @@ static inline void detach (pid_t cpid)
 /*  OCaml interface: manipulate ocaml values, mind the GC,
     and call regular C functions */
 
-static inline void extract_mmap (value v_mmap,
-                                 unsigned long *text,
-                                 unsigned long *data)
+// Keep in sync with the fields of Mmap.t
+#define MMAP_TEXT 0
+#define MMAP_DATA 1
+#define MMAP_SEG_START 0
+#define MMAP_ELF_FILE_OFFSET 3
+static value extract_mmap (value v_mmap,
+                           struct probe_notes *elf,
+                           unsigned long *text,
+                           unsigned long *data)
 {
+  CAMLparam1(v_mmap);
+  CAMLlocal3(text_entry,data_entry,v);
+  // v_mmap: Mmap.t option
   if (Long_val(v_mmap) == 1)
     raise_error ("Missing memory map for your pie");
-  value v = Field(v_mmap, 0);
-  *text = Int64_val(Field(v, 0));
-  *data = Int64_val(Field(v, 1));
-  if (verbose)
-    fprintf(stderr, "extract_mmap: text=%lx; data=%lx\n", *text, *data);
+  v = Field(v_mmap, 0);
+  text_entry = Field(v, MMAP_TEXT);
+  data_entry = Field(v, MMAP_DATA);
+
+  unsigned long text_offset = Int64_val(Field(text_entry, MMAP_ELF_FILE_OFFSET));
+  unsigned long text_addr = Int64_val(Field(text_entry, MMAP_SEG_START));
+  unsigned long data_offset = Int64_val(Field(data_entry, MMAP_ELF_FILE_OFFSET));
+  unsigned long data_addr = Int64_val(Field(data_entry, MMAP_SEG_START));
+
+  if (verbose) {
+    fprintf(stderr, "extract_mmap segment start : text=%lx; data=%lx\n",
+            text_addr, data_addr);
+    fprintf(stderr, "extract_mmap segment offset: text=%lx; data=%lx\n",
+            text_offset, data_offset);
+    fprintf(stderr, "extract_mmap section start : text=%lx; data=%lx\n",
+            elf->text_addr, elf->data_addr);
+    fprintf(stderr, "extract_mmap section offset: text=%lx; data=%lx\n",
+            elf->text_offset, data_offset);
+  }
+
+  // the following calculation give the dynamic address of a symbol:
+  // sym_dynamic_addr
+  // "symbol's dynamic address"
+  //  = "segment start"
+  //  + "offset of symbol's static address from the start of its section"
+  //  + "offset of its section from the base of the segment's offset in the file"
+  //  = "segment start"
+  //  + "symbol's static address" - "section start"
+  //  + "section offset into the file" - "segment offset into the file"
+  //  = seg_addr + (sym_static_addr - sec_addr) + (sec_offset - seg_offset)
+  //  = seg_addr + sec_offset  - seg_offset - sec_addr
+  // Read "segment start" and "segment offset into file" from mmap.
+  // The rest is known from reading elf file.
+  // Precompute the offset of dynamic address from static address
+  // for each type of symbol, making sure it doesn't over/underflow.
+  if ((text_addr < elf->text_addr) || (elf->text_offset < text_offset)
+      || (data_addr < elf->data_addr) || (elf->data_offset < data_offset))
+    raise_error ("Unexpected section sizes\n");
+  *text = text_addr - text_offset + elf->text_offset - elf->text_addr;
+  *data = data_addr - data_offset + elf->data_offset - elf->data_addr;
+
+  if (verbose) {
+    fprintf(stderr, "extract_mmap result: text=%lx; data=%lx\n",
+            *text, *data);
+  }
+
+  CAMLreturn(Val_unit);
 }
 
 CAMLprim value caml_probes_lib_start (value v_argv)
@@ -488,9 +541,9 @@ CAMLprim value caml_probes_lib_get_states (value v_internal,
   CAMLlocal1(v_states);
   pid_t cpid = Long_val(v_pid);
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  unsigned long text_seg_start = 0;
-  unsigned long data_seg_start = 0;
-  if (notes->pie) extract_mmap(v_mmap, &text_seg_start, &data_seg_start);
+  unsigned long text_offset = 0;
+  unsigned long data_offset = 0;
+  if (notes->pie) extract_mmap(v_mmap, notes, &text_offset, &data_offset);
   int n = Wosize_val(v_names);
   v_states = caml_alloc(n,0);
   int b;
@@ -499,7 +552,9 @@ CAMLprim value caml_probes_lib_get_states (value v_internal,
     for (size_t i = 0; i < notes->num_probes; i++) {
       struct probe_note *note = notes->probe_notes[i];
       if (!strcmp(name, note->name)) {
-        b = get_semaphore(cpid, note, data_seg_start);
+        if (!note->semaphore) raise_error("Not found semaphore for %s", name);
+        unsigned long addr = data_offset + note->semaphore;
+        b = get_semaphore(cpid, addr);
         Store_field(v_states, i, Val_bool(b));
         break;
       }
@@ -519,9 +574,9 @@ CAMLprim value caml_probes_lib_update (value v_internal,
   int enable = Bool_val(v_enable);
   const char *name = String_val(v_name);
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  unsigned long text_seg_start = 0;
-  unsigned long data_seg_start = 0;
-  if (notes->pie) extract_mmap(v_mmap, &text_seg_start, &data_seg_start);
+  unsigned long text_offset = 0;
+  unsigned long data_offset = 0;
+  if (notes->pie) extract_mmap(v_mmap, notes, &text_offset, &data_offset);
   // CR-soon gyorsh: update by index, not name, to avoid scanning probe_notes
   // array for each name.
   // For it to be efficient, avoid multiple calls to this stub (a call per index
@@ -531,7 +586,7 @@ CAMLprim value caml_probes_lib_update (value v_internal,
   // It matter if there are many probes that are enabled/disabled often while
   // the tracer remains attached (i.e., use  seize + interrupt
   // instead of traceme/attach ptrace calls).
-  update_probe(notes, cpid, name, enable, text_seg_start, data_seg_start);
+  update_probe(notes, cpid, name, enable, text_offset, data_offset);
   CAMLreturn(Val_unit);
 }
 
@@ -545,13 +600,13 @@ CAMLprim value caml_probes_lib_set_all (value v_internal,
   pid_t cpid = Long_val(v_pid);
   int enable = Bool_val(v_enable);
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  unsigned long text_seg_start = 0;
-  unsigned long data_seg_start = 0;
-  if (notes->pie) extract_mmap(v_mmap, &text_seg_start, &data_seg_start);
+  unsigned long text_offset = 0;
+  unsigned long data_offset = 0;
+  if (notes->pie) extract_mmap(v_mmap, notes, &text_offset, &data_offset);
   int n = Wosize_val(v_names);
   for (int i = 0; i < n; i++) {
     const char *name = String_val(Field(v_names, i));
-    update_probe(notes, cpid, name, enable, text_seg_start, data_seg_start);
+    update_probe(notes, cpid, name, enable, text_offset, data_offset);
   }
   CAMLreturn(Val_unit);
 }

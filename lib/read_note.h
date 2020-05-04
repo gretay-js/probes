@@ -19,9 +19,15 @@ struct probe_note {
 };
 
 struct probe_notes {
-  size_t num_probes;
+  int num_probes;
   struct probe_note **probe_notes;
+  // The following fields are used in position independent executables
+  // to find the dynamic addresses of probes and semaphores
   bool pie;
+  unsigned long text_addr;
+  unsigned long text_offset;
+  unsigned long data_addr;
+  unsigned long data_offset;
 };
 
 int read_notes(const char *file, struct probe_notes *result);
