@@ -34,6 +34,7 @@ Copyright (c) 2019 Jane Street Group LLC.
  (depends
   (ocaml (>= 4.09))
   (dune (>= 1.8))
+  dune-build-info
   probes-lib
   core
   ppx_jane
