@@ -16,6 +16,8 @@ typedef uint64_t __u64;
 #include <errno.h>
 #include "read_note.h"
 
+static bool verbose = false;
+
 struct whole_elf {
   size_t size;
   char *data;
@@ -137,10 +139,6 @@ static int get_main_sections(struct whole_elf *whole_elf,
       found_data = true;
     }
   }
-  if(!found_stapsdt) {
-    fprintf(stderr, "stapsdt note section not found\n");
-    return 1;
-  }
   if(!found_text) {
     fprintf(stderr, "text section not found\n");
     return 1;
@@ -148,6 +146,10 @@ static int get_main_sections(struct whole_elf *whole_elf,
   if(!found_data) {
     fprintf(stderr, "data section not found\n");
     return 1;
+  }
+  if(!found_stapsdt) {
+    if (verbose) fprintf(stderr, "stapsdt note section not found\n");
+    return -1;
   }
   return 0;
 }
@@ -183,57 +185,19 @@ int parse_arguments(struct probe_note *note, char *argstring)
   return 0;
 }
 
-int read_notes(const char *filename, struct probe_notes *result)
+int parse_notes(char *data,
+                struct main_sections *ms,
+                struct probe_notes *result)
 {
-  struct whole_elf whole_elf =
-    { .size = 0,
-      .data = NULL,
-      .pie = false,
-    };
-  { // one pass to count bytes, another to copy them
-    FILE *file = fopen(filename, "r");
-    if(!file) {
-      fprintf(stderr, "elf file not found\n");
-      return 1;
-    }
-    while(fgetc(file)!=EOF) ++whole_elf.size;
-    fseek(file, 0, SEEK_SET);
-    whole_elf.data = malloc(whole_elf.size);
-    if(!whole_elf.data) {
-      fclose(file);
-      fprintf(stderr, "could not alloc elf file\n");
-      return 1;
-    }
-    int c;
-    for(size_t i=0; (c=fgetc(file))!=EOF; ++i) whole_elf.data[i] = c;
-    fclose(file);
-  }
-  // initialize just to suppress warnings
-  struct main_sections ms = {.stapsdt = {0},
-                             .strings = {0},
-                             .text = {0},
-                             .data = {0}};
-  if(get_main_sections(&whole_elf, &ms)) {
-    fprintf(stderr, "error getting main sections\n");
-    goto error1;
-  }
-  result->pie = whole_elf.pie;
-  result->text_addr = ms.text.addr;
-  result->text_offset = ms.text.offset;
-  result->data_addr = ms.data.addr;
-  result->data_offset = ms.data.offset;
-  unsigned long text_start = ms.text.addr;
-  unsigned long text_finish = ms.text.addr+ms.text.size;
-  unsigned long data_start = ms.data.addr;
-  unsigned long data_finish = ms.data.addr+ms.data.size;
-  /* fprintf (stderr, "text section: (%lx,%lx)", text_start, text_finish);
-   * fprintf (stderr, "data section: (%lx,%lx)", data_start, data_finish); */
-  char *data = section_data(&whole_elf, &ms.stapsdt);
+  unsigned long text_start = ms->text.addr;
+  unsigned long text_finish = ms->text.addr+ms->text.size;
+  unsigned long data_start = ms->data.addr;
+  unsigned long data_finish = ms->data.addr+ms->data.size;
+  size_t num_notes = 0;
   size_t offset = 0;
   struct probe_note **notes = NULL;
   size_t len_notes = 0;
-  size_t num_notes = 0;
-  while(offset < ms.stapsdt.size) {
+  while(offset < ms->stapsdt.size) {
     if (num_notes >= len_notes) {
       len_notes = (len_notes == 0? 64 : len_notes * 2);
       notes = (struct probe_note **)
@@ -279,8 +243,8 @@ int read_notes(const char *filename, struct probe_notes *result)
     }
     current->semaphore = *(__u64*)(data+0x10);
     if ((current->semaphore == 0) // no semaphore
-       || !((data_start <= current->semaphore) &&
-            (current->semaphore <= data_finish))) {
+        || !((data_start <= current->semaphore) &&
+             (current->semaphore <= data_finish))) {
       fprintf (stderr, "probe semaphore's offset is missing or outside"
                "of .data section: %lx\n", current->offset);
       goto error2;
@@ -319,7 +283,6 @@ int read_notes(const char *filename, struct probe_notes *result)
     result->probe_notes[i] = notes[i];
   }
   if (notes) free(notes);
-  destroy(&whole_elf);
   return 0;
  error2:
   if (notes) {
@@ -331,6 +294,61 @@ int read_notes(const char *filename, struct probe_notes *result)
     }
     free(notes);
   }
+  return 1;
+}
+
+int read_notes(const char *filename, struct probe_notes *result, bool v)
+{
+  verbose = v;
+  struct whole_elf whole_elf =
+    { .size = 0,
+      .data = NULL,
+      .pie = false,
+    };
+  { // one pass to count bytes, another to copy them
+    FILE *file = fopen(filename, "r");
+    if(!file) {
+      fprintf(stderr, "elf file not found\n");
+      return 1;
+    }
+    while(fgetc(file)!=EOF) ++whole_elf.size;
+    fseek(file, 0, SEEK_SET);
+    whole_elf.data = malloc(whole_elf.size);
+    if(!whole_elf.data) {
+      fclose(file);
+      fprintf(stderr, "could not alloc elf file\n");
+      return 1;
+    }
+    int c;
+    for(size_t i=0; (c=fgetc(file))!=EOF; ++i) whole_elf.data[i] = c;
+    fclose(file);
+  }
+  // initialize just to suppress warnings
+  struct main_sections ms = {.stapsdt = {0},
+                             .strings = {0},
+                             .text = {0},
+                             .data = {0}};
+  switch (get_main_sections(&whole_elf, &ms)) {
+  case 0:
+    if (parse_notes(section_data(&whole_elf, &ms.stapsdt),&ms,result))
+      goto error1;
+    break;
+  case -1: // not found stapsdt section
+    result->num_probes = 0;
+    break;
+  default:
+    fprintf(stderr, "error getting main sections\n");
+    goto error1;
+  }
+  result->pie = whole_elf.pie;
+  result->text_addr = ms.text.addr;
+  result->text_offset = ms.text.offset;
+  result->data_addr = ms.data.addr;
+  result->data_offset = ms.data.offset;
+  /* fprintf (stderr, "text section: (%lx,%lx)", text_start, text_finish);
+   * fprintf (stderr, "data section: (%lx,%lx)", data_start, data_finish); */
+  destroy(&whole_elf);
+  return 0;
  error1:
   destroy(&whole_elf);
   return 1;

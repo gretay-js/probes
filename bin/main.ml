@@ -1,8 +1,16 @@
 module P = Probes_lib
 
+let create ~prog ~bpf =
+  let t = P.create ~prog ~bpf in
+  if (Array.length (P.get_probe_names t) = 0) then begin
+    Printf.printf "No probes found in %s\n" prog;
+    exit 1
+  end;
+  t
+
 let info ~pid ~bpf =
   let prog = P.get_exe pid in
-  let t = P.create ~prog ~bpf in
+  let t = create ~prog ~bpf in
   P.attach t pid ~check_prog:false;
   let probes = P.get_probe_states t in
   Array.iter
@@ -14,7 +22,7 @@ let info ~pid ~bpf =
 
 let attach ~pid ~bpf ~(actions : P.actions) =
   let prog = P.get_exe pid in
-  let t = P.create ~prog ~bpf in
+  let t = create ~prog ~bpf in
   match actions with
   | All a ->
       let enable =
@@ -29,7 +37,7 @@ let attach ~pid ~bpf ~(actions : P.actions) =
       P.detach t
 
 let trace ~prog ~args ~bpf ~(actions : P.actions) =
-  let t = P.create ~prog ~bpf in
+  let t = create ~prog ~bpf in
   match actions with
   | All Enable -> P.trace_all t ~prog ~args
   | All Disable | Selected _ ->

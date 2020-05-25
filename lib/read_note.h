@@ -30,6 +30,6 @@ struct probe_notes {
   unsigned long data_offset;
 };
 
-int read_notes(const char *file, struct probe_notes *result);
+int read_notes(const char *file, struct probe_notes *result, bool verbose);
 
 // CR-soon rcummings: need functions to conveniently free these structs

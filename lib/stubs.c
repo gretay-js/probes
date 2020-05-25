@@ -150,7 +150,7 @@ static inline long ptrace_set_data(pid_t pid, void *addr, void *data)
 #include <caml/custom.h>
 
 // Error handling
-static bool verbose;
+static bool verbose = false;
 
 static inline void v_raise_error(const char *fmt, va_list argp)
 {
@@ -505,7 +505,7 @@ CAMLprim value caml_probes_lib_read_notes (value v_filename)
 
   struct probe_notes *res = malloc(sizeof(struct probe_notes));
   if (!res) raise_error ("could not allocate probe notes");
-  if(read_notes(filename, res)) {
+  if(read_notes(filename, res, verbose)) {
     free(res);
     raise_error("could not parse probe notes", filename);
   }
