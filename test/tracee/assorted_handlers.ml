@@ -18,13 +18,13 @@ let h4 name x y =
 
 (* code *)
 let test1 x y =
-  [%probe "test1" h4 x y];
+  [%probe "test1" (h4 x y)];
   let z =
     if x > y  then
-      ([%probe "test_arg" h2 (x+y) "true_branch"];
+      ([%probe "test_arg" (h2 (x+y) "true_branch")];
        x - y)
     else
-      ([%probe "test_arg" h2 x "false_branch"];
+      ([%probe "test_arg" (h2 x "false_branch")];
        y - x)
   in
   assert (not (y = 0));
@@ -34,7 +34,7 @@ let test1 x y =
 [@@inline never]
 
 let () =
-  [%probe "main" h3 0x45L];
+  [%probe "main" (h3 0x45L)];
   let r =
     if ((Array.length Sys.argv) = 3) then
       ([%probe "test_noarg" h0];

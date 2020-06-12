@@ -6,3 +6,15 @@
  (inline_tests (deps tracee/test.exe))
  (preprocess (pps ppx_inline_test)))
 
+
+(executable
+ (name trace_test)
+ (modules trace_test)
+ (libraries probes-lib core)
+ (preprocess (pps ppx_inline_test)))
+
+(rule
+ (alias runtest)
+ (deps (glob_files "tracee/*.exe"))
+ (action (run %{exe:trace_test.exe} %{deps})))
+ 

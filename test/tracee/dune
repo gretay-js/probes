@@ -2,3 +2,51 @@
  (name test)
  (modules test)
  )
+
+(executable
+ (name no_probe_option)
+ (modules no_probe_option)
+ (ocamlopt_flags (:standard -no-probes))
+ )
+
+(executable
+ (name printf_in_handler)
+ (modules printf_in_handler)
+ )
+
+(executable
+ (name backtrace_in_handler)
+ (modules backtrace_in_handler)
+ )
+
+(executable
+ (name backtrace_in_handler_loop)
+ (modules backtrace_in_handler_loop)
+ )
+
+(executable
+ (name gc_in_handler)
+ (modules gc_in_handler)
+ )
+
+(executable
+ (name gc_in_handler_deep_stack)
+ (modules gc_in_handler_deep_stack)
+ )
+
+(executable
+ (name many_free_vars_in_handler)
+ (modules many_free_vars_in_handler)
+ )
+
+(executable
+ (name probe_in_handler)
+ (modules probe_in_handler)
+ )
+
+(executable
+ (name exception_in_handler)
+ (modules exception_in_handler)
+ )
+
+
