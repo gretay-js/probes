@@ -245,7 +245,7 @@ int parse_notes(char *data,
     if ((current->semaphore == 0) // no semaphore
         || !((data_start <= current->semaphore) &&
              (current->semaphore <= data_finish))) {
-      fprintf (stderr, "probe semaphore's offset is missing or outside"
+      fprintf (stderr, "probe semaphore's offset is missing or outside "
                "of .data section: %lx\n", current->offset);
       goto error2;
     }
