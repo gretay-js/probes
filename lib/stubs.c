@@ -232,6 +232,29 @@ static inline void modify_probe(pid_t cpid, unsigned long addr, bool enable)
   };
 }
 
+static inline bool is_probe_enabled_in_code(pid_t cpid, unsigned long addr)
+{
+  errno = 0;
+  addr = addr + 1;
+  unsigned long data = ptrace_get_text(cpid, (void *) addr);
+  if (errno != 0) {
+    signal_and_error(cpid, "is_enabled probe in pid %d: "
+                     "failed to PEEKTEXT at %lx with errno %d\n",
+                     cpid, addr, errno);
+  }
+  if (verbose) fprintf (stderr, "cur at %lx: %lx\n", addr, data);
+  switch (data & 0xff) {
+  case CMP_OPCODE:
+    return false;
+  case CALL_OPCODE:
+    return true;
+  default:
+    signal_and_error(cpid, "unexpect instruction at probe address %lx in pid %d",
+                     addr, cpid, (data& 0xff));
+  }
+  __builtin_unreachable();
+}
+
 static inline bool is_enabled(signed long data)
 {
   return (data > 0);
@@ -243,6 +266,8 @@ static inline bool modify_semaphore(pid_t cpid,
                                     unsigned long addr)
 {
   errno = 0;
+  // CR gyorsh: semaphore is only 2 bytes long, extract the 2 bytes,
+  // modify, and put back.
   signed long cur_data = ptrace_get_data(cpid, (void *) addr);
   if (errno != 0) {
     signal_and_error(cpid, "modify_semaphore for probe in pid %d:\n\
@@ -298,9 +323,14 @@ static inline void update_probe(struct probe_notes *notes, pid_t cpid,
     if (!strcmp(name, note->name)) {
       if (!found) {
         found = true;
-        if (!note->semaphore) raise_error("Semaphore not found for %s", name);
-        unsigned long addr = data_offset + note->semaphore;
-        change = modify_semaphore(cpid, enable, addr);
+        if (!note->semaphore) {
+          if (verbose) fprintf(stderr, "Semaphore not found for %s", name);
+          unsigned long addr = text_offset + note->offset;
+          change = (is_probe_enabled_in_code(cpid, addr) != enable);
+        } else {
+          unsigned long addr = data_offset + note->semaphore;
+          change = modify_semaphore(cpid, enable, addr);
+        }
       }
       if (change) {
         unsigned long addr = text_offset + note->offset;
@@ -552,9 +582,14 @@ CAMLprim value caml_probes_lib_get_states (value v_internal,
     for (size_t i = 0; i < notes->num_probes; i++) {
       struct probe_note *note = notes->probe_notes[i];
       if (!strcmp(name, note->name)) {
-        if (!note->semaphore) raise_error("Not found semaphore for %s", name);
-        unsigned long addr = data_offset + note->semaphore;
-        b = get_semaphore(cpid, addr);
+        if (!note->semaphore) {
+          if (verbose) fprintf(stderr, "Semaphore not found for %s", name);
+          unsigned long addr = text_offset + note->offset;
+          b = is_probe_enabled_in_code(cpid, addr);
+        } else {
+          unsigned long addr = data_offset + note->semaphore;
+          b = get_semaphore(cpid, addr);
+        }
         Store_field(v_states, i, Val_bool(b));
         break;
       }
