@@ -74,7 +74,8 @@ struct main_sections {
   struct section stapsdt;
   struct section strings;
   struct section text;
-  struct section data;
+  struct section data; // not used
+  struct section probes;
 };
 
 #define ET_EXEC 2
@@ -110,7 +111,7 @@ static int get_main_sections(struct whole_elf *whole_elf,
   struct section current;
   bool found_stapsdt = false;
   bool found_text = false;
-  bool found_data = false;
+  bool found_probes = false;
   for(size_t i = 0; i<section_table.num_headers; ++i) {
     read_section_details(whole_elf, &section_table, i, &result->strings,
                          &current);
@@ -130,26 +131,26 @@ static int get_main_sections(struct whole_elf *whole_elf,
         return 1;
       }
       found_text = true;
-    } else if (!strcmp(current.name, ".data") && current.type == SHT_PROGBITS) {
-      result->data = current;
-      if(found_data) {
-        fprintf(stderr, "duplicate .data sections\n");
+    } else if (!strcmp(current.name, ".probes") && current.type == SHT_PROGBITS) {
+      result->probes = current;
+      if(found_probes) {
+        fprintf(stderr, "duplicate .probes sections\n");
         return 1;
       }
-      found_data = true;
+      found_probes = true;
     }
   }
   if(!found_text) {
-    fprintf(stderr, "text section not found\n");
-    return 1;
-  }
-  if(!found_data) {
-    fprintf(stderr, "data section not found\n");
+    fprintf(stderr, ".text section not found\n");
     return 1;
   }
   if(!found_stapsdt) {
     if (verbose) fprintf(stderr, "stapsdt note section not found\n");
     return -1;
+  }
+  if(!found_probes) {
+    if (verbose) fprintf(stderr, ".probes section not found\n");
+    return -2;
   }
   return 0;
 }
@@ -187,12 +188,9 @@ int parse_arguments(struct probe_note *note, char *argstring)
 
 int parse_notes(char *data,
                 struct main_sections *ms,
-                struct probe_notes *result)
+                struct probe_notes *result,
+                bool found_probes_section)
 {
-  unsigned long text_start = ms->text.addr;
-  unsigned long text_finish = ms->text.addr+ms->text.size;
-  unsigned long data_start = ms->data.addr;
-  unsigned long data_finish = ms->data.addr+ms->data.size;
   size_t num_notes = 0;
   size_t offset = 0;
   struct probe_note **notes = NULL;
@@ -235,19 +233,21 @@ int parse_notes(char *data,
     notes[num_notes] = current;
     ++num_notes;
     current->offset = *(__u64*)data;
-    if (!((text_start <= current->offset) &&
-          (current->offset <= text_finish))) {
+    if (!((ms->text.addr <= current->offset) &&
+          (current->offset <= ms->text.addr+ms->text.size))) {
       fprintf (stderr, "probe offset outside of .text section: %lx\n",
                current->offset);
       goto error2;
     }
     current->semaphore = *(__u64*)(data+0x10);
     if ((current->semaphore == 0) // no semaphore
-        || !((data_start <= current->semaphore) &&
-             (current->semaphore <= data_finish))) {
+        || !found_probes_section // no semaphore section
+        || !((ms->probes.addr <= current->semaphore) &&
+             (current->semaphore <= ms->probes.addr+ms->probes.size))) {
       fprintf (stderr, "probe semaphore's offset is missing or outside "
-               "of .data section: %lx\n", current->offset);
-      goto error2;
+               "of .probes section: probe=%lx,semaphore=%lx\n",
+               current->offset, current->semaphore);
+      current->semaphore = 0;
     }
     char *provider = data+0x18;
     // CR-soon rcummings: do something with provider, check if it is 'ocaml'
@@ -327,14 +327,19 @@ int read_notes(const char *filename, struct probe_notes *result, bool v)
   struct main_sections ms = {.stapsdt = {0},
                              .strings = {0},
                              .text = {0},
-                             .data = {0}};
+                             .data = {0},
+                             .probes = {0}};
   switch (get_main_sections(&whole_elf, &ms)) {
   case 0:
-    if (parse_notes(section_data(&whole_elf, &ms.stapsdt),&ms,result))
+    if (parse_notes(section_data(&whole_elf, &ms.stapsdt),&ms,result,true))
       goto error1;
     break;
   case -1: // not found stapsdt section
     result->num_probes = 0;
+    break;
+  case -2: // not found .probes section - semaphores not emitted
+    if (parse_notes(section_data(&whole_elf, &ms.stapsdt),&ms,result,false))
+      goto error1;
     break;
   default:
     fprintf(stderr, "error getting main sections\n");
@@ -343,8 +348,8 @@ int read_notes(const char *filename, struct probe_notes *result, bool v)
   result->pie = whole_elf.pie;
   result->text_addr = ms.text.addr;
   result->text_offset = ms.text.offset;
-  result->data_addr = ms.data.addr;
-  result->data_offset = ms.data.offset;
+  result->data_addr = ms.probes.addr;
+  result->data_offset = ms.probes.offset;
   /* fprintf (stderr, "text section: (%lx,%lx)", text_start, text_finish);
    * fprintf (stderr, "data section: (%lx,%lx)", data_start, data_finish); */
   destroy(&whole_elf);
