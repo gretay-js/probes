@@ -1,7 +1,7 @@
 let () =
   [%probe "boo" (Printf.printf "BOO!\n")];
   let boo_enabled = [%probe_is_enabled "boo"] in
-  assert (not boo_enabled)
+  if boo_enabled then Printf.printf "BOO was enabled - first top level\n"
 
 let f x y z =
   Printf.printf "f: %d %f %s\n" x y z
@@ -21,4 +21,4 @@ let () =
   [%probe "boo" (Printf.printf "BOO!\n")];
   fib 0 1;
   let boo_enabled = [%probe_is_enabled "boo"] in
-  assert (not boo_enabled)
+  if boo_enabled then Printf.printf "BOO was enabled - end\n";
