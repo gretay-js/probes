@@ -1,9 +1,4 @@
 (executable
- (name test)
- (modules test)
- )
-
-(executable
  (name no_probe_option)
  (modules no_probe_option)
  (ocamlopt_flags (:standard -no-probes))

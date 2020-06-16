@@ -3,18 +3,26 @@
  (modules probes_lib_test)
  (ocamlopt_flags (:standard -g))
  (libraries probes-lib core)
- (inline_tests (deps tracee/test.exe))
- (preprocess (pps ppx_inline_test)))
-
+)
 
 (executable
  (name trace_test)
  (modules trace_test)
- (libraries probes-lib core)
- (preprocess (pps ppx_inline_test)))
+ (libraries probes_lib_test)
+ )
+
+(executable
+ (name trace_test)
+ (modules trace_test)
+ (libraries probes_lib_test)
+ )
 
 (rule
  (alias runtest)
  (deps (glob_files "tracee/*.exe"))
  (action (run %{exe:trace_test.exe} %{deps})))
- 
+
+(rule
+ (alias runtest)
+ (deps (glob_files "tracee/non-terminating/*.exe"))
+ (action (run %{exe:attach_test.exe} %{deps})))
