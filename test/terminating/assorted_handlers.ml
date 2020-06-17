@@ -1,6 +1,6 @@
 (* handlers *)
-let h0 name =
-  Printf.printf "h0:%s\n" name
+let h0 () =
+  Printf.printf "h0:noarg\n"
 
 let h1 name n fl ls o =
   Printf.printf "h0:%s:%d:%f:%s:%s\n" name n fl
@@ -18,18 +18,18 @@ let h4 name x y =
 
 (* code *)
 let test1 x y =
-  [%probe "test1" (h4 x y)];
+  [%probe "test1" (h4 "test1" x y)];
   let z =
     if x > y  then
-      ([%probe "test_arg" (h2 (x+y) "true_branch")];
+      ([%probe "test_arg" (h2 "test_arg" (x+y) "true_branch")];
        x - y)
     else
-      ([%probe "test_arg" (h2 x "false_branch")];
+      ([%probe "test_arg" (h2 "test_arg" x "false_branch")];
        y - x)
   in
   assert (not (y = 0));
   let fl = Float.((float_of_int x) /. (float_of_int y)) in
-  [%probe "test_manyarg" h1 x fl [x;y;z] (Some z)];
+  [%probe "test_manyarg" (h1 "test_manyarg" x fl [x;y;z] (Some z))];
   z
 [@@inline never]
 
