@@ -116,8 +116,12 @@ let create ~prog ~bpf =
     |> Array.of_list
   in
   let pie = stub_pie internal in
-  if !verbose then
-    Array.iteri (fun i name -> Printf.printf "%d:%s\n" i name) probe_names;
+  if !verbose then begin
+    if Array.length probe_names = 0 then
+      Printf.printf "No probes found in %s\n" prog
+    else
+      Array.iteri (fun i name -> Printf.printf "%d:%s\n" i name) probe_names
+  end;
   { status = Not_attached; prog; bpf; probe_names; pie; internal }
 
 (* Updates [t.status] after stub to ensure stub didn't raise *)
