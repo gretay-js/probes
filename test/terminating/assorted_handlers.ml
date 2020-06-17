@@ -28,16 +28,16 @@ let test1 x y =
        y - x)
   in
   assert (not (y = 0));
-  let fl = Float.((float_of_int x) /. (float_of_int y)) in
+  let fl = ((float_of_int x) /. (float_of_int y)) in
   [%probe "test_manyarg" (h1 "test_manyarg" x fl [x;y;z] (Some z))];
   z
 [@@inline never]
 
 let () =
-  [%probe "main" (h3 0x45L)];
+  [%probe "main" (h3 "main" 0x45L)];
   let r =
     if ((Array.length Sys.argv) = 3) then
-      ([%probe "test_noarg" h0];
+      ([%probe "test_noarg" (h0 ())];
         test1 (int_of_string Sys.argv.(1)) (int_of_string Sys.argv.(2)))
     else Int.max_int
   in
