@@ -1,4 +1,4 @@
 let () =
   [%probe "boo" (Printf.printf "BOO!\n")];
   let boo_enabled = [%probe_is_enabled "boo"] in
-  assert (not boo_enabled)
+  if boo_enabled then Printf.printf "spooky\n" else "quiet\n"
