@@ -114,7 +114,8 @@
  (deps no_probe_option.exe)
  (action
    (with-outputs-to no_probe_option.output
-     (run probes trace -prog %{dep:no_probe_option.exe}))))
+   (with-accepted-exit-codes 1
+     (run probes trace -prog %{dep:no_probe_option.exe})))))
 
 (rule
  (alias runtest)
