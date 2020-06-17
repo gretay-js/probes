@@ -1,28 +1,44 @@
-(library
- (name probes_lib_test)
- (modules probes_lib_test)
- (ocamlopt_flags (:standard -g))
- (libraries probes-lib core)
-)
 
-(executable
- (name trace_test)
- (modules trace_test)
- (libraries probes_lib_test)
- )
 
-(executable
- (name trace_test)
- (modules trace_test)
- (libraries probes_lib_test)
- )
+;; (rule
+;;  (deps
+;;   (source_tree terminating/.))
+;;  (action
+;;   (with-stdout-to
+;;    terminating/dune.inc.gen
+;;    (run ./gen/gen_trace.exe))))
 
-(rule
- (alias runtest)
- (deps (glob_files "tracee/*.exe"))
- (action (run %{exe:trace_test.exe} %{deps})))
+;; (rule
+;;  (alias runtest)
+;;  (action
+;;   (diff terminating/dune.inc dune.inc.gen)))
 
-(rule
- (alias runtest)
- (deps (glob_files "tracee/non-terminating/*.exe"))
- (action (run %{exe:attach_test.exe} %{deps})))
+
+;; (library
+;;  (name probes_lib_test)
+;;  (modules probes_lib_test)
+;;  (ocamlopt_flags (:standard -g))
+;;  (libraries probes-lib core)
+;; )
+
+;; (executable
+;;  (name trace_test)
+;;  (modules trace_test)
+;;  (libraries probes_lib_test)
+;;  )
+
+;; (executable
+;;  (name trace_test)
+;;  (modules trace_test)
+;;  (libraries probes_lib_test)
+;;  )
+
+;; (rule
+;;  (alias runtest)
+;;  (deps (glob_files "tracee/*.exe"))
+;;  (action (run %{exe:trace_test.exe} %{deps})))
+
+;; (rule
+;;  (alias runtest)
+;;  (deps (glob_files "tracee/non-terminating/*.exe"))
+;;  (action (run %{exe:attach_test.exe} %{deps})))
