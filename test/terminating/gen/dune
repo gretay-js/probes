@@ -1,3 +1,7 @@
 (executable
  (name gen_trace)
  (libraries stdio))
+
+(executable
+ (name test_trace)
+ (module test_trace))

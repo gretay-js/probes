@@ -39,10 +39,10 @@ let emit_test m ~with_probes =
  (modules %s))
 
 (rule
- (deps %s.exe)
+ (deps %s.exe gen/test_trace.exe)
  (action
    (with-outputs-to %s.output
-     (run probes trace -prog %%{dep:%s.exe}))))
+     (run gen/test_trace.exe %%{dep:%s.exe}))))
 
 (rule
  (alias runtest)
