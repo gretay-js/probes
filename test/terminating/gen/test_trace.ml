@@ -1,17 +1,3 @@
-let test prog =
-  let pid = Probes_lib_test.trace_test_lib ~prog ~args:[] ~bpf:false in
-  match Unix.waitpid [] pid with
-  | (p, WEXITED 0) when p = pid -> ()
-  | (p, status) ->
-    let desc, code =
-      match status with
-       | WEXITED n -> "exited with code", n
-       | WSIGNALED n -> "killed with signal", n
-       | WSTOPPED n -> "stopped with signal", n
-    in
-    failwith (Printf.sprintf
-                "Tracing %s with process id %d failed. \
-                 Process %d %s %d.\n" prog pid p desc code)
-
 let () =
-  test Sys.argv.(1)
+  let prog = Sys.argv.(1) in
+  Probes_lib_test.(trace_test_lib ~prog ~args:[] ~bpf:false |> wait ~prog)

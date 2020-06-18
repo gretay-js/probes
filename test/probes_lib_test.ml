@@ -20,3 +20,17 @@ let trace_test_lib ~prog ~args ~bpf =
   P.update t ~actions;
   P.detach t;
   pid
+
+let wait ~prog pid =
+  match Unix.waitpid [] pid with
+  | (p, WEXITED 0) when p = pid -> ()
+  | (p, status) ->
+    let desc, code =
+      match status with
+      | WEXITED n -> "exited with code", n
+      | WSIGNALED n -> "killed with signal", n
+      | WSTOPPED n -> "stopped with signal", n
+    in
+    failwith (Printf.sprintf
+                "Tracing %s with process id %d failed. \
+                 Process %d %s %d.\n" prog pid p desc code)

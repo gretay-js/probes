@@ -1,3 +1,9 @@
-;; (executable
-;;  (name gen_trace)
-;;  (libraries stdio))
+(executable
+ (name gen_attach)
+ (modules gen_attach)
+ (libraries stdio))
+
+(executable
+ (name test_attach)
+ (modules test_attach)
+ (libraries probes_lib_test))

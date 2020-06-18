@@ -1,15 +1,12 @@
 (executable
- (name printf_in_handler)
- (modules printf_in_handler))
+ (name test)
+ (modules test))
 
 (rule
- (deps printf_in_handler.exe)
  (action
-   (with-outputs-to printf_in_handler.output
-     (run probes trace -prog %{dep:printf_in_handler.exe}))))
+   (with-outputs-to test.output
+     (run %{dep:gen/test_attach.exe} %{dep:test.exe}))))
 
 (rule
  (alias runtest)
- (action (diff printf_in_handler.expected printf_in_handler.output)))
-
-
+ (action (diff test.expected test.output)))
