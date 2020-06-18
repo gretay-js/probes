@@ -8,10 +8,11 @@ let test prog =
       match status with
        | WEXITED n -> "exited with code", n
        | WSIGNALED n -> "killed with signal", n
-       | WSTOPPED n -> "stopped with signal", Int.to_string n
+       | WSTOPPED n -> "stopped with signal", n
     in
-    failwithf "Tracing %s with process id %d failed. \
-               Process %d %s %d.\n" prog pid p desc code
+    failwith (Printf.sprintf
+                "Tracing %s with process id %d failed. \
+                 Process %d %s %d.\n" prog pid p desc code)
 
 let () =
   test Sys.argv.(1)

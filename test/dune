@@ -1,0 +1,5 @@
+(library
+ (name probes_lib_test)
+ (modules probes_lib_test)
+ (libraries probes_lib))
+ 
