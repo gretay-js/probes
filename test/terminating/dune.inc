@@ -6,10 +6,9 @@
  (modules assorted_handlers))
 
 (rule
- (deps assorted_handlers.exe gen/test_trace.exe)
  (action
    (with-outputs-to assorted_handlers.output
-     (run gen/test_trace.exe %{dep:assorted_handlers.exe}))))
+     (run ../test_trace.exe %{dep:assorted_handlers.exe}))))
 
 (rule
  (alias runtest)
@@ -25,10 +24,9 @@
  (modules assorted_handlers_no_probes))
 
 (rule
- (deps assorted_handlers_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to assorted_handlers_no_probes.output
-     (run gen/test_trace.exe %{dep:assorted_handlers_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:assorted_handlers_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -41,10 +39,9 @@
  (modules backtrace_in_handler))
 
 (rule
- (deps backtrace_in_handler.exe gen/test_trace.exe)
  (action
    (with-outputs-to backtrace_in_handler.output
-     (run gen/test_trace.exe %{dep:backtrace_in_handler.exe}))))
+     (run ../test_trace.exe %{dep:backtrace_in_handler.exe}))))
 
 (rule
  (alias runtest)
@@ -60,10 +57,9 @@
  (modules backtrace_in_handler_no_probes))
 
 (rule
- (deps backtrace_in_handler_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to backtrace_in_handler_no_probes.output
-     (run gen/test_trace.exe %{dep:backtrace_in_handler_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:backtrace_in_handler_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -76,10 +72,9 @@
  (modules backtrace_in_handler_loop))
 
 (rule
- (deps backtrace_in_handler_loop.exe gen/test_trace.exe)
  (action
    (with-outputs-to backtrace_in_handler_loop.output
-     (run gen/test_trace.exe %{dep:backtrace_in_handler_loop.exe}))))
+     (run ../test_trace.exe %{dep:backtrace_in_handler_loop.exe}))))
 
 (rule
  (alias runtest)
@@ -95,10 +90,9 @@
  (modules backtrace_in_handler_loop_no_probes))
 
 (rule
- (deps backtrace_in_handler_loop_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to backtrace_in_handler_loop_no_probes.output
-     (run gen/test_trace.exe %{dep:backtrace_in_handler_loop_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:backtrace_in_handler_loop_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -111,10 +105,9 @@
  (modules exception_in_handler))
 
 (rule
- (deps exception_in_handler.exe gen/test_trace.exe)
  (action
    (with-outputs-to exception_in_handler.output
-     (run gen/test_trace.exe %{dep:exception_in_handler.exe}))))
+     (run ../test_trace.exe %{dep:exception_in_handler.exe}))))
 
 (rule
  (alias runtest)
@@ -130,10 +123,9 @@
  (modules exception_in_handler_no_probes))
 
 (rule
- (deps exception_in_handler_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to exception_in_handler_no_probes.output
-     (run gen/test_trace.exe %{dep:exception_in_handler_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:exception_in_handler_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -146,10 +138,9 @@
  (modules gc_in_handler))
 
 (rule
- (deps gc_in_handler.exe gen/test_trace.exe)
  (action
    (with-outputs-to gc_in_handler.output
-     (run gen/test_trace.exe %{dep:gc_in_handler.exe}))))
+     (run ../test_trace.exe %{dep:gc_in_handler.exe}))))
 
 (rule
  (alias runtest)
@@ -165,10 +156,9 @@
  (modules gc_in_handler_no_probes))
 
 (rule
- (deps gc_in_handler_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to gc_in_handler_no_probes.output
-     (run gen/test_trace.exe %{dep:gc_in_handler_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:gc_in_handler_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -181,10 +171,9 @@
  (modules gc_in_handler_deep_stack))
 
 (rule
- (deps gc_in_handler_deep_stack.exe gen/test_trace.exe)
  (action
    (with-outputs-to gc_in_handler_deep_stack.output
-     (run gen/test_trace.exe %{dep:gc_in_handler_deep_stack.exe}))))
+     (run ../test_trace.exe %{dep:gc_in_handler_deep_stack.exe}))))
 
 (rule
  (alias runtest)
@@ -200,10 +189,9 @@
  (modules gc_in_handler_deep_stack_no_probes))
 
 (rule
- (deps gc_in_handler_deep_stack_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to gc_in_handler_deep_stack_no_probes.output
-     (run gen/test_trace.exe %{dep:gc_in_handler_deep_stack_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:gc_in_handler_deep_stack_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -216,10 +204,9 @@
  (modules many_free_vars_in_handler))
 
 (rule
- (deps many_free_vars_in_handler.exe gen/test_trace.exe)
  (action
    (with-outputs-to many_free_vars_in_handler.output
-     (run gen/test_trace.exe %{dep:many_free_vars_in_handler.exe}))))
+     (run ../test_trace.exe %{dep:many_free_vars_in_handler.exe}))))
 
 (rule
  (alias runtest)
@@ -235,10 +222,9 @@
  (modules many_free_vars_in_handler_no_probes))
 
 (rule
- (deps many_free_vars_in_handler_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to many_free_vars_in_handler_no_probes.output
-     (run gen/test_trace.exe %{dep:many_free_vars_in_handler_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:many_free_vars_in_handler_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -251,10 +237,9 @@
  (modules printf_in_handler))
 
 (rule
- (deps printf_in_handler.exe gen/test_trace.exe)
  (action
    (with-outputs-to printf_in_handler.output
-     (run gen/test_trace.exe %{dep:printf_in_handler.exe}))))
+     (run ../test_trace.exe %{dep:printf_in_handler.exe}))))
 
 (rule
  (alias runtest)
@@ -270,10 +255,9 @@
  (modules printf_in_handler_no_probes))
 
 (rule
- (deps printf_in_handler_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to printf_in_handler_no_probes.output
-     (run gen/test_trace.exe %{dep:printf_in_handler_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:printf_in_handler_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -286,10 +270,9 @@
  (modules probe_in_handler))
 
 (rule
- (deps probe_in_handler.exe gen/test_trace.exe)
  (action
    (with-outputs-to probe_in_handler.output
-     (run gen/test_trace.exe %{dep:probe_in_handler.exe}))))
+     (run ../test_trace.exe %{dep:probe_in_handler.exe}))))
 
 (rule
  (alias runtest)
@@ -305,10 +288,9 @@
  (modules probe_in_handler_no_probes))
 
 (rule
- (deps probe_in_handler_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to probe_in_handler_no_probes.output
-     (run gen/test_trace.exe %{dep:probe_in_handler_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:probe_in_handler_no_probes.exe}))))
 
 (rule
  (alias runtest)
@@ -321,10 +303,9 @@
  (modules probe_is_enabled))
 
 (rule
- (deps probe_is_enabled.exe gen/test_trace.exe)
  (action
    (with-outputs-to probe_is_enabled.output
-     (run gen/test_trace.exe %{dep:probe_is_enabled.exe}))))
+     (run ../test_trace.exe %{dep:probe_is_enabled.exe}))))
 
 (rule
  (alias runtest)
@@ -340,10 +321,9 @@
  (modules probe_is_enabled_no_probes))
 
 (rule
- (deps probe_is_enabled_no_probes.exe gen/test_trace.exe)
  (action
    (with-outputs-to probe_is_enabled_no_probes.output
-     (run gen/test_trace.exe %{dep:probe_is_enabled_no_probes.exe}))))
+     (run ../test_trace.exe %{dep:probe_is_enabled_no_probes.exe}))))
 
 (rule
  (alias runtest)

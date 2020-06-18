@@ -6,7 +6,7 @@
  (action
   (with-stdout-to
    dune.inc.gen
-   (run ./gen/gen_trace.exe))))
+   (run ../gen_dune.exe %{dep:../test_trace.exe}))))
 
 (rule
  (alias runtest)

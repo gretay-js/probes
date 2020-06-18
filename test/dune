@@ -2,4 +2,14 @@
  (name probes_lib_test)
  (modules probes_lib_test)
  (libraries probes_lib))
- 
+
+
+(executable
+ (name gen_dune)
+ (modules gen_dune)
+ (libraries stdio))
+
+(executable
+ (name test_trace)
+ (modules test_trace)
+ (libraries probes_lib_test))

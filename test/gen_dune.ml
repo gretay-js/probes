@@ -10,7 +10,7 @@
    Copying may be the only way as the .expected files are different,
    depending on the flags.
 *)
-let emit_test m ~with_probes =
+let emit_test m ~runner ~with_probes =
   let ocamlopt_flags =
     let f = m ^ ".ocamlopt_flags" in
     let extra_flags =
@@ -39,10 +39,9 @@ let emit_test m ~with_probes =
  (modules %s))
 
 (rule
- (deps %s.exe gen/test_trace.exe)
  (action
    (with-outputs-to %s.output
-     (run gen/test_trace.exe %%{dep:%s.exe}))))
+     (run %s %%{dep:%s.exe}))))
 
 (rule
  (alias runtest)
@@ -50,9 +49,10 @@ let emit_test m ~with_probes =
 |}
   m (if with_probes then "" else "out")
   copy_rule
-  base ocamlopt_flags base base base base base base
+  base ocamlopt_flags base base runner base base base
 
 let () =
+  let runner = Sys.argv.(1) in
   Sys.readdir "."
   |> Array.to_list
   |> List.filter_map (fun file ->
@@ -66,5 +66,5 @@ let () =
   (* Sort to ensure that the generated dune.inc does not
      depend on the order in which readdir lists the files. *)
   |> List.iter (fun m ->
-    emit_test m ~with_probes:true;
-    emit_test m ~with_probes:false)
+    emit_test m ~runner ~with_probes:true;
+    emit_test m ~runner ~with_probes:false)
