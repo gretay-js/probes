@@ -54,12 +54,17 @@ let emit_test m ~with_probes =
 
 let () =
   Sys.readdir "."
-  |> Array.iter (fun file ->
-    match Filename.chop_suffix_opt prog ~suffix:".ml" with
-    | None -> ()
+  |> Array.to_list
+  |> List.filter_map (fun file ->
+    match Filename.chop_suffix_opt file ~suffix:".ml" with
+    | None -> None
     | Some m ->
-      if not (Filename.check_suffix m "_no_probes") then begin
-        emit_test m ~with_probes:true;
-        emit_test m ~with_probes:false;
-      end)
-    Sys.argv
+      (match Filename.check_suffix m "_no_probes" with
+       | true -> None
+       | false -> Some m))
+  |> List.sort String.compare
+  (* Sort to ensure that the generated dune.inc does not
+     depend on the order in which readdir lists the files. *)
+  |> List.iter (fun m ->
+    emit_test m ~with_probes:true;
+    emit_test m ~with_probes:false)

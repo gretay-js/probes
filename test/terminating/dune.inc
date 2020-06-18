@@ -34,41 +34,6 @@
  (alias runtest)
  (action (diff assorted_handlers_no_probes.expected assorted_handlers_no_probes.output)))
 
-;;;; Test assorted_handlers_no_probes.ml with probes
-
-(executable
- (name assorted_handlers_no_probes)
- (modules assorted_handlers_no_probes))
-
-(rule
- (deps assorted_handlers_no_probes.exe)
- (action
-   (with-outputs-to assorted_handlers_no_probes.output
-     (run probes trace -prog %{dep:assorted_handlers_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff assorted_handlers_no_probes.expected assorted_handlers_no_probes.output)))
-
-;;;; Test assorted_handlers_no_probes.ml without probes
-
-(rule (copy assorted_handlers_no_probes.ml assorted_handlers_no_probes_no_probes.ml))
-
-(executable
- (name assorted_handlers_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules assorted_handlers_no_probes_no_probes))
-
-(rule
- (deps assorted_handlers_no_probes_no_probes.exe)
- (action
-   (with-outputs-to assorted_handlers_no_probes_no_probes.output
-     (run probes trace -prog %{dep:assorted_handlers_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff assorted_handlers_no_probes_no_probes.expected assorted_handlers_no_probes_no_probes.output)))
-
 ;;;; Test backtrace_in_handler.ml with probes
 
 (executable
@@ -139,76 +104,6 @@
  (alias runtest)
  (action (diff backtrace_in_handler_loop_no_probes.expected backtrace_in_handler_loop_no_probes.output)))
 
-;;;; Test backtrace_in_handler_loop_no_probes.ml with probes
-
-(executable
- (name backtrace_in_handler_loop_no_probes)
- (modules backtrace_in_handler_loop_no_probes))
-
-(rule
- (deps backtrace_in_handler_loop_no_probes.exe)
- (action
-   (with-outputs-to backtrace_in_handler_loop_no_probes.output
-     (run probes trace -prog %{dep:backtrace_in_handler_loop_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff backtrace_in_handler_loop_no_probes.expected backtrace_in_handler_loop_no_probes.output)))
-
-;;;; Test backtrace_in_handler_loop_no_probes.ml without probes
-
-(rule (copy backtrace_in_handler_loop_no_probes.ml backtrace_in_handler_loop_no_probes_no_probes.ml))
-
-(executable
- (name backtrace_in_handler_loop_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules backtrace_in_handler_loop_no_probes_no_probes))
-
-(rule
- (deps backtrace_in_handler_loop_no_probes_no_probes.exe)
- (action
-   (with-outputs-to backtrace_in_handler_loop_no_probes_no_probes.output
-     (run probes trace -prog %{dep:backtrace_in_handler_loop_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff backtrace_in_handler_loop_no_probes_no_probes.expected backtrace_in_handler_loop_no_probes_no_probes.output)))
-
-;;;; Test backtrace_in_handler_no_probes.ml with probes
-
-(executable
- (name backtrace_in_handler_no_probes)
- (modules backtrace_in_handler_no_probes))
-
-(rule
- (deps backtrace_in_handler_no_probes.exe)
- (action
-   (with-outputs-to backtrace_in_handler_no_probes.output
-     (run probes trace -prog %{dep:backtrace_in_handler_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff backtrace_in_handler_no_probes.expected backtrace_in_handler_no_probes.output)))
-
-;;;; Test backtrace_in_handler_no_probes.ml without probes
-
-(rule (copy backtrace_in_handler_no_probes.ml backtrace_in_handler_no_probes_no_probes.ml))
-
-(executable
- (name backtrace_in_handler_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules backtrace_in_handler_no_probes_no_probes))
-
-(rule
- (deps backtrace_in_handler_no_probes_no_probes.exe)
- (action
-   (with-outputs-to backtrace_in_handler_no_probes_no_probes.output
-     (run probes trace -prog %{dep:backtrace_in_handler_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff backtrace_in_handler_no_probes_no_probes.expected backtrace_in_handler_no_probes_no_probes.output)))
-
 ;;;; Test exception_in_handler.ml with probes
 
 (executable
@@ -243,41 +138,6 @@
 (rule
  (alias runtest)
  (action (diff exception_in_handler_no_probes.expected exception_in_handler_no_probes.output)))
-
-;;;; Test exception_in_handler_no_probes.ml with probes
-
-(executable
- (name exception_in_handler_no_probes)
- (modules exception_in_handler_no_probes))
-
-(rule
- (deps exception_in_handler_no_probes.exe)
- (action
-   (with-outputs-to exception_in_handler_no_probes.output
-     (run probes trace -prog %{dep:exception_in_handler_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff exception_in_handler_no_probes.expected exception_in_handler_no_probes.output)))
-
-;;;; Test exception_in_handler_no_probes.ml without probes
-
-(rule (copy exception_in_handler_no_probes.ml exception_in_handler_no_probes_no_probes.ml))
-
-(executable
- (name exception_in_handler_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules exception_in_handler_no_probes_no_probes))
-
-(rule
- (deps exception_in_handler_no_probes_no_probes.exe)
- (action
-   (with-outputs-to exception_in_handler_no_probes_no_probes.output
-     (run probes trace -prog %{dep:exception_in_handler_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff exception_in_handler_no_probes_no_probes.expected exception_in_handler_no_probes_no_probes.output)))
 
 ;;;; Test gc_in_handler.ml with probes
 
@@ -349,76 +209,6 @@
  (alias runtest)
  (action (diff gc_in_handler_deep_stack_no_probes.expected gc_in_handler_deep_stack_no_probes.output)))
 
-;;;; Test gc_in_handler_deep_stack_no_probes.ml with probes
-
-(executable
- (name gc_in_handler_deep_stack_no_probes)
- (modules gc_in_handler_deep_stack_no_probes))
-
-(rule
- (deps gc_in_handler_deep_stack_no_probes.exe)
- (action
-   (with-outputs-to gc_in_handler_deep_stack_no_probes.output
-     (run probes trace -prog %{dep:gc_in_handler_deep_stack_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff gc_in_handler_deep_stack_no_probes.expected gc_in_handler_deep_stack_no_probes.output)))
-
-;;;; Test gc_in_handler_deep_stack_no_probes.ml without probes
-
-(rule (copy gc_in_handler_deep_stack_no_probes.ml gc_in_handler_deep_stack_no_probes_no_probes.ml))
-
-(executable
- (name gc_in_handler_deep_stack_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules gc_in_handler_deep_stack_no_probes_no_probes))
-
-(rule
- (deps gc_in_handler_deep_stack_no_probes_no_probes.exe)
- (action
-   (with-outputs-to gc_in_handler_deep_stack_no_probes_no_probes.output
-     (run probes trace -prog %{dep:gc_in_handler_deep_stack_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff gc_in_handler_deep_stack_no_probes_no_probes.expected gc_in_handler_deep_stack_no_probes_no_probes.output)))
-
-;;;; Test gc_in_handler_no_probes.ml with probes
-
-(executable
- (name gc_in_handler_no_probes)
- (modules gc_in_handler_no_probes))
-
-(rule
- (deps gc_in_handler_no_probes.exe)
- (action
-   (with-outputs-to gc_in_handler_no_probes.output
-     (run probes trace -prog %{dep:gc_in_handler_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff gc_in_handler_no_probes.expected gc_in_handler_no_probes.output)))
-
-;;;; Test gc_in_handler_no_probes.ml without probes
-
-(rule (copy gc_in_handler_no_probes.ml gc_in_handler_no_probes_no_probes.ml))
-
-(executable
- (name gc_in_handler_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules gc_in_handler_no_probes_no_probes))
-
-(rule
- (deps gc_in_handler_no_probes_no_probes.exe)
- (action
-   (with-outputs-to gc_in_handler_no_probes_no_probes.output
-     (run probes trace -prog %{dep:gc_in_handler_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff gc_in_handler_no_probes_no_probes.expected gc_in_handler_no_probes_no_probes.output)))
-
 ;;;; Test many_free_vars_in_handler.ml with probes
 
 (executable
@@ -453,41 +243,6 @@
 (rule
  (alias runtest)
  (action (diff many_free_vars_in_handler_no_probes.expected many_free_vars_in_handler_no_probes.output)))
-
-;;;; Test many_free_vars_in_handler_no_probes.ml with probes
-
-(executable
- (name many_free_vars_in_handler_no_probes)
- (modules many_free_vars_in_handler_no_probes))
-
-(rule
- (deps many_free_vars_in_handler_no_probes.exe)
- (action
-   (with-outputs-to many_free_vars_in_handler_no_probes.output
-     (run probes trace -prog %{dep:many_free_vars_in_handler_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff many_free_vars_in_handler_no_probes.expected many_free_vars_in_handler_no_probes.output)))
-
-;;;; Test many_free_vars_in_handler_no_probes.ml without probes
-
-(rule (copy many_free_vars_in_handler_no_probes.ml many_free_vars_in_handler_no_probes_no_probes.ml))
-
-(executable
- (name many_free_vars_in_handler_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules many_free_vars_in_handler_no_probes_no_probes))
-
-(rule
- (deps many_free_vars_in_handler_no_probes_no_probes.exe)
- (action
-   (with-outputs-to many_free_vars_in_handler_no_probes_no_probes.output
-     (run probes trace -prog %{dep:many_free_vars_in_handler_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff many_free_vars_in_handler_no_probes_no_probes.expected many_free_vars_in_handler_no_probes_no_probes.output)))
 
 ;;;; Test printf_in_handler.ml with probes
 
@@ -524,41 +279,6 @@
  (alias runtest)
  (action (diff printf_in_handler_no_probes.expected printf_in_handler_no_probes.output)))
 
-;;;; Test printf_in_handler_no_probes.ml with probes
-
-(executable
- (name printf_in_handler_no_probes)
- (modules printf_in_handler_no_probes))
-
-(rule
- (deps printf_in_handler_no_probes.exe)
- (action
-   (with-outputs-to printf_in_handler_no_probes.output
-     (run probes trace -prog %{dep:printf_in_handler_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff printf_in_handler_no_probes.expected printf_in_handler_no_probes.output)))
-
-;;;; Test printf_in_handler_no_probes.ml without probes
-
-(rule (copy printf_in_handler_no_probes.ml printf_in_handler_no_probes_no_probes.ml))
-
-(executable
- (name printf_in_handler_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules printf_in_handler_no_probes_no_probes))
-
-(rule
- (deps printf_in_handler_no_probes_no_probes.exe)
- (action
-   (with-outputs-to printf_in_handler_no_probes_no_probes.output
-     (run probes trace -prog %{dep:printf_in_handler_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff printf_in_handler_no_probes_no_probes.expected printf_in_handler_no_probes_no_probes.output)))
-
 ;;;; Test probe_in_handler.ml with probes
 
 (executable
@@ -594,41 +314,6 @@
  (alias runtest)
  (action (diff probe_in_handler_no_probes.expected probe_in_handler_no_probes.output)))
 
-;;;; Test probe_in_handler_no_probes.ml with probes
-
-(executable
- (name probe_in_handler_no_probes)
- (modules probe_in_handler_no_probes))
-
-(rule
- (deps probe_in_handler_no_probes.exe)
- (action
-   (with-outputs-to probe_in_handler_no_probes.output
-     (run probes trace -prog %{dep:probe_in_handler_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff probe_in_handler_no_probes.expected probe_in_handler_no_probes.output)))
-
-;;;; Test probe_in_handler_no_probes.ml without probes
-
-(rule (copy probe_in_handler_no_probes.ml probe_in_handler_no_probes_no_probes.ml))
-
-(executable
- (name probe_in_handler_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules probe_in_handler_no_probes_no_probes))
-
-(rule
- (deps probe_in_handler_no_probes_no_probes.exe)
- (action
-   (with-outputs-to probe_in_handler_no_probes_no_probes.output
-     (run probes trace -prog %{dep:probe_in_handler_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff probe_in_handler_no_probes_no_probes.expected probe_in_handler_no_probes_no_probes.output)))
-
 ;;;; Test probe_is_enabled.ml with probes
 
 (executable
@@ -663,38 +348,3 @@
 (rule
  (alias runtest)
  (action (diff probe_is_enabled_no_probes.expected probe_is_enabled_no_probes.output)))
-
-;;;; Test probe_is_enabled_no_probes.ml with probes
-
-(executable
- (name probe_is_enabled_no_probes)
- (modules probe_is_enabled_no_probes))
-
-(rule
- (deps probe_is_enabled_no_probes.exe)
- (action
-   (with-outputs-to probe_is_enabled_no_probes.output
-     (run probes trace -prog %{dep:probe_is_enabled_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff probe_is_enabled_no_probes.expected probe_is_enabled_no_probes.output)))
-
-;;;; Test probe_is_enabled_no_probes.ml without probes
-
-(rule (copy probe_is_enabled_no_probes.ml probe_is_enabled_no_probes_no_probes.ml))
-
-(executable
- (name probe_is_enabled_no_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules probe_is_enabled_no_probes_no_probes))
-
-(rule
- (deps probe_is_enabled_no_probes_no_probes.exe)
- (action
-   (with-outputs-to probe_is_enabled_no_probes_no_probes.output
-     (run probes trace -prog %{dep:probe_is_enabled_no_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff probe_is_enabled_no_probes_no_probes.expected probe_is_enabled_no_probes_no_probes.output)))
