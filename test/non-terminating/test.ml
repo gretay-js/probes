@@ -17,10 +17,10 @@ let foo a b c =
   ((Sys.opaque_identity g) a b)
 
 let rec fib i j =
-  if i < 0 then
+  if i < 0 then begin
+    [%probe "stop" (exit 2)];
     fib 0 1
-  else
-    begin
+  end else begin
     if i mod 2 = 0 then
       foo (i + j) Float.(of_int i /. of_int j) "myau";
     fib j (i + j);
