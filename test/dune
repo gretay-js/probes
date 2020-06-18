@@ -3,7 +3,6 @@
  (modules probes_lib_test)
  (libraries probes_lib))
 
-
 (executable
  (name gen_dune)
  (modules gen_dune)
@@ -12,4 +11,9 @@
 (executable
  (name test_trace)
  (modules test_trace)
+ (libraries probes_lib_test))
+
+(executable
+ (name test_attach)
+ (modules test_attach)
  (libraries probes_lib_test))

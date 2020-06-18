@@ -1,15 +1,14 @@
-;; (include dune.inc)
+(include dune.inc)
 
-;; (rule
-;;  (deps
-;;   (source_tree .)
-;;   (:ml (glob_files *.ml)))
-;;  (action
-;;   (with-stdout-to
-;;    dune.inc.gen
-;;    (run ./gen/gen_trace.exe %{ml}))))
+(rule
+ (deps
+  (:sources (source_tree .)))
+ (action
+  (with-stdout-to
+   dune.inc.gen
+   (run ../gen_dune.exe %{dep:../test_attach.exe} %{sources}))))
 
-;; (rule
-;;  (alias runtest)
-;;  (action
-;;   (diff dune.inc dune.inc.gen)))
+(rule
+ (alias runtest)
+ (action
+  (diff dune.inc dune.inc.gen)))
