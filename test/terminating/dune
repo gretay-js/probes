@@ -2,13 +2,11 @@
 
 (rule
  (deps
-  (source_tree gen/)
-  (glob_files *.ocamlopt_flags)
-  (:ml (glob_files *.ml)))
+  (source_tree .))
  (action
   (with-stdout-to
    dune.inc.gen
-   (run ./gen/gen_trace.exe %{ml}))))
+   (run ./gen/gen_trace.exe))))
 
 (rule
  (alias runtest)

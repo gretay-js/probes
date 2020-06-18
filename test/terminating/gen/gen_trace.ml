@@ -10,33 +10,29 @@
    Copying may be the only way as the .expected files are different,
    depending on the flags.
 *)
-let emit_test prog ~with_probes =
-  match Filename.chop_suffix_opt prog ~suffix:".ml" with
-  | None -> failwith (Printf.sprintf "Unrecognized file format: %s" prog)
-  | Some m ->
-    let ocamlopt_flags =
-      let f = m ^ ".ocamlopt_flags" in
-      let extra_flags =
-        List.concat
-          [
-            if Sys.file_exists f then Stdio.In_channel.read_lines f else [];
-            if with_probes then [] else ["-no-probes"];
-          ]
-      in
-      match extra_flags with
-      | [] -> ""
-      | _ -> Printf.sprintf "\n (ocamlopt_flags (:standard %s))"
-               (String.concat " " extra_flags)
+let emit_test m ~with_probes =
+  let ocamlopt_flags =
+    let f = m ^ ".ocamlopt_flags" in
+    let extra_flags =
+      List.concat
+        [
+          if Sys.file_exists f then Stdio.In_channel.read_lines f else [];
+          if with_probes then [] else ["-no-probes"];
+        ]
     in
-    let base = if with_probes then m else m^"_no_probes" in
-    let copy_rule =
-      if with_probes then ""
-      else Printf.sprintf "\n(rule (copy %s.ml %s.ml))\n" m base
-    in
-    Printf.printf
+    match extra_flags with
+    | [] -> ""
+    | _ -> Printf.sprintf "\n (ocamlopt_flags (:standard %s))"
+             (String.concat " " extra_flags)
+  in
+  let base = if with_probes then m else m^"_no_probes" in
+  let copy_rule =
+    if with_probes then ""
+    else Printf.sprintf "\n(rule (copy %s.ml %s.ml))\n" m base
+  in
+  Printf.printf
 {|
-
-;;;; Test %s with%s probes
+;;;; Test %s.ml with%s probes
 %s
 (executable
  (name %s)%s
@@ -52,16 +48,18 @@ let emit_test prog ~with_probes =
  (alias runtest)
  (action (diff %s.expected %s.output)))
 |}
-
-prog (if with_probes then "" else "out")
-copy_rule
-base ocamlopt_flags base base base base base base
-
+  m (if with_probes then "" else "out")
+  copy_rule
+  base ocamlopt_flags base base base base base base
 
 let () =
-  Array.iteri (fun i file ->
-    if i > 0 then begin
-      emit_test file ~with_probes:true;
-      emit_test file ~with_probes:false;
-    end)
+  Sys.readdir "."
+  |> Array.iter (fun file ->
+    match Filename.chop_suffix_opt prog ~suffix:".ml" with
+    | None -> ()
+    | Some m ->
+      if not (Filename.check_suffix m "_no_probes") then begin
+        emit_test m ~with_probes:true;
+        emit_test m ~with_probes:false;
+      end)
     Sys.argv
