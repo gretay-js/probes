@@ -2,11 +2,11 @@
 
 (rule
  (deps
-  (source_tree .))
+  (:sources (source_tree .)))
  (action
   (with-stdout-to
    dune.inc.gen
-   (run ../gen_dune.exe %{dep:../test_trace.exe}))))
+   (run ../gen_dune.exe %{dep:../test_trace.exe} %{sources}))))
 
 (rule
  (alias runtest)
