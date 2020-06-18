@@ -2,7 +2,8 @@
 
 (rule
  (deps
-  (source_tree .)
+  (source_tree gen/)
+  (glob_files *.ocamlopt_flags)
   (:ml (glob_files *.ml)))
  (action
   (with-stdout-to
