@@ -21,11 +21,24 @@ let trace_test_lib ~prog ~args ~bpf =
   P.detach t;
   pid
 
+
 let trace_test_lib_actions ~prog ~args ~bpf ~actions =
   let t = P.create ~prog ~bpf in
   P.start t ~prog ~args ~check_prog:false;
   let pid = Option.get (P.get_pid t) in
-  P.update t ~actions;
+  (* All probes are disabled initially,
+     only enable actions matter at start. *)
+  (match actions with
+   | P.All P.Disable -> ()
+   | P.All P.Enable -> P.update t ~actions
+   | Selected list ->
+     let res =
+       List.filter (fun (action, _) ->
+         match action with
+         | P.Disable -> false
+         | P.Enable -> true
+       ) list
+     in P.update t ~actions:(Selected res));
   P.detach t;
   pid
 
