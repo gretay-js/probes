@@ -70,7 +70,8 @@ val set_verbose : bool -> unit
 (** Control debug printing. *)
 
 val get_probe_names : t -> probe_name array
-(** Returns the names of probes available in the program associated with [t]. *)
+(** Returns the names of probes available in the program associated with [t].
+    The array is sorted and containts no duplicates. *)
 
 val get_probe_states : t -> probe_desc array
 (** Check which probes are enabled in the current process. Raise if not
