@@ -337,11 +337,11 @@ static inline void update_probe(struct probe_notes *notes, pid_t cpid,
         modify_probe(cpid, addr, enable);
       }
     }
-    if (!found)
-      if (verbose)
-        fprintf(stderr, "update probe failed: probe named %s is not found\n",
-                    name);
   }
+  if (!found)
+    if (verbose)
+      fprintf(stderr, "update probe failed: probe named %s is not found\n",
+              name);
 }
 
 /* ptrace calls, nothing specific to probes */
