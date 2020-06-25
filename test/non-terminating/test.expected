@@ -1,5 +1,20 @@
-fooia disabled
-fooia enabled
-fooia disabled
-fooia enabled
-fooia disabled
+0:p1
+1:p2
+p1 disabled
+p2 disabled
+Test p1
+p1 disabled
+p2 enabled
+p1 disabled
+p2 disabled
+Test p2
+p1 enabled
+p2 enabled
+p1 disabled
+p2 disabled
+p1 enabled
+p2 enabled
+p1 disabled
+p2 disabled
+Tracing test.exe with process id 12272 failed. Process 12272 killed with signal -7.
+

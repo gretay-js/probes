@@ -1,36 +1,17 @@
-(* simple example: run forever, print something once,
-   when a probe is hit for the first time after being enabled. *)
+(* simple example: run forever, print something once, when a probe is hit for
+   the first time. *)
 
-type state = Init | Print of int*int | Done
-let enabled = ref Init
+let p1_hit = ref false
 
-let f x y =
-  match !enabled with
-  | Init ->
-    enabled := Print (x,y)
-  | Print _ | Done -> ()
+let p2_hit = ref false
 
-let [@inline never] g i j =
-  match !enabled with
-  | Init | Done -> ()
-  | Print (x,y) ->
-    Printf.printf "g: %d %d %d %d\n" i j x y;
-    enabled := Done
+let on_p name hit =
+  if not !hit then (
+    hit := true;
+    Printf.printf "Hit %s\n" name )
 
-let foo i j =
-  [%probe "fooia" (f i j)];
-  ((Sys.opaque_identity g) i j)
-
-let rec fib i j =
-  if i < 0 then begin
-    [%probe "reset" (
-      match !enabled with
-      | Init | Print _ -> ()
-      | Done -> enabled := Print (0,1))];
-    fib 0 1
-  end else begin
-    if i mod 2 = 0 then foo i j;
-    fib j (i + j);
-  end
-
-let () = fib 0 1
+let () =
+  while true do
+    [%probe "p1" (on_p "p1" p1_hit)];
+    [%probe "p2" (on_p "p2" p1_hit)]
+  done
