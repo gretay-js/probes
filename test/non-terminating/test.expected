@@ -16,5 +16,5 @@ p1 enabled
 p2 enabled
 p1 disabled
 p2 disabled
-Tracing test.exe with process id 12272 failed. Process 12272 killed with signal -7.
+Tracing test.exe with process id <pid> failed. Process <pid> killed with signal -7.
 

@@ -35,7 +35,11 @@ let test prog =
     Unix.kill pid Sys.sigkill;
     T.wait pid ~prog
   with Failure s ->
-    Printf.printf "%s\n" s;
+    (* remove pid from s *)
+    let spid = string_of_int pid in
+    String.split_on_char ' ' s
+    |> List.map (fun s -> if String.equal s spid then "<pid>" else s)
+    |> String.concat " " |> Printf.printf "%s\n";
     (* ignore failure caused by kill *)
     ()
 

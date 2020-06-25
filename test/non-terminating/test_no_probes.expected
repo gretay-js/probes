@@ -1,2 +1,2 @@
-Tracing test_no_probes.exe with process id 12271 failed. Process 12271 killed with signal -7.
+Tracing test_no_probes.exe with process id <pid> failed. Process <pid> killed with signal -7.
 
