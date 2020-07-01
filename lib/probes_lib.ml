@@ -116,12 +116,11 @@ let create ~prog ~bpf =
     |> Array.of_list
   in
   let pie = stub_pie internal in
-  if !verbose then begin
+  if !verbose then
     if Array.length probe_names = 0 then
       Printf.printf "No probes found in %s\n" prog
     else
-      Array.iteri (fun i name -> Printf.printf "%d:%s\n" i name) probe_names
-  end;
+      Array.iteri (fun i name -> Printf.printf "%d:%s\n" i name) probe_names;
   { status = Not_attached; prog; bpf; probe_names; pie; internal }
 
 (* Updates [t.status] after stub to ensure stub didn't raise *)
@@ -180,11 +179,11 @@ let start t ~prog ~args ~check_prog =
       set_status t pid;
       ()
 
-(* CR-soon gyorsh: avoid unnecessary writes to memory when the current state
-   of the probe is already as needed. *)
-(* CR-soon gyorsh: avoid multiple C calls by passing all probes that need to
-   be modified at once array, but then we need to avoid extra allocation. *)
-(* CR-soon gyorsh: do we need a setting to configure how to respond if the
+(* CR-someday gyorsh: avoid unnecessary writes to memory when the current
+   state of the probe is already as needed. *)
+(* CR-someday gyorsh: avoid multiple C calls by passing all probes that need
+   to be modified at once array, but then we need to avoid extra allocation. *)
+(* CR-someday gyorsh: do we need a setting to configure how to respond if the
    state does not change? *)
 let enable = function
   | Enable -> true
@@ -210,8 +209,8 @@ let update t ~actions =
 (* Reads the value of probe semaphores in current process's memory. An
    alternative implementation (for example, if semaphores aren't in use),
    could be to check the instruction at the probe in the text section. *)
-(* CR-soon gyorsh: avoid unnecessary writes to memory when the current state
-   of the probe is arleady as needed. *)
+(* CR-someday gyorsh: avoid unnecessary writes to memory when the current
+   state of the probe is arleady as needed. *)
 let get_probe_states t =
   match t.status with
   | Not_attached -> raise (Error "cannot get probe states: no pid\n")

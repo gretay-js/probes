@@ -73,7 +73,7 @@ let flag_actions =
     [flag_all P.Enable; flag_all P.Disable; flag_selected]
     ~if_nothing_chosen:(Default_to (P.All P.Enable))
 
-(* CR-soon gyorsh: the functionality for bpf is in, but the command line
+(* CR-someday gyorsh: the functionality for bpf is in, but the command line
    interface isn't implemented yet. Requires setuid privilleages on this tool
    to run. *)
 let bpf = false

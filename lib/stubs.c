@@ -58,7 +58,7 @@ static inline long ptrace_detach(pid_t pid)
 static inline long ptrace_kill(pid_t pid)
 { return ptrace(PT_KILL, pid, (caddr_t)1, 0); }
 
-// CR-soon gyorsh: test peek/poke on mac
+// CR-someday gyorsh: test peek/poke on mac
 static inline long get_mem(pid_t pid, void *addr, vm_prot_t prot)
 {
   kern_return_t kret;
@@ -486,7 +486,7 @@ CAMLprim value caml_probes_lib_start (value v_argv)
   }
   argv[argc] = NULL;
 
-  /* CR-soon mshinwell: We should think about whether we should release the
+  /* CR-someday mshinwell: We should think about whether we should release the
      runtime lock here */
 
   pid_t cpid = start(argv);
@@ -612,7 +612,7 @@ CAMLprim value caml_probes_lib_update (value v_internal,
   unsigned long text_offset = 0;
   unsigned long data_offset = 0;
   if (notes->pie) extract_mmap(v_mmap, notes, &text_offset, &data_offset);
-  // CR-soon gyorsh: update by index, not name, to avoid scanning probe_notes
+  // CR-someday gyorsh: update by index, not name, to avoid scanning probe_notes
   // array for each name.
   // For it to be efficient, avoid multiple calls to this stub (a call per index
   // with the same name) unless the call can be made very cheap,
