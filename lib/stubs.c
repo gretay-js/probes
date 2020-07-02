@@ -318,7 +318,7 @@ static inline void update_probe(struct probe_notes *notes, pid_t cpid,
 {
   bool found = false;
   bool change = false;
-  for (size_t i = 0; i < notes->num_probes; i++) {
+  for (int i = 0; i < notes->num_probes; i++) {
     struct probe_note *note = notes->probe_notes[i];
     if (!strcmp(name, note->name)) {
       if (!found) {
@@ -553,9 +553,9 @@ CAMLprim value caml_probes_lib_get_names (value v_internal)
   CAMLlocal2(v_names, v_name);
 
   struct probe_notes *notes = Probe_notes_val(v_internal);
-  size_t n = notes->num_probes;
+  int n = notes->num_probes;
   v_names = caml_alloc(n,0);
-  for (size_t i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
     v_name = caml_copy_string(notes->probe_notes[i]->name);
     Store_field(v_names, i, v_name);
   }
@@ -579,7 +579,7 @@ CAMLprim value caml_probes_lib_get_states (value v_internal,
   int b;
   for (int i = 0; i < n; i++) {
     const char *name = String_val(Field(v_names, i));
-    for (size_t i = 0; i < notes->num_probes; i++) {
+    for (int i = 0; i < notes->num_probes; i++) {
       struct probe_note *note = notes->probe_notes[i];
       if (!strcmp(name, note->name)) {
         if (!note->semaphore) {
