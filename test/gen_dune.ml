@@ -36,7 +36,8 @@ let emit_test m ~runner ~with_probes =
 %s
 (executable
  (name %s)%s
- (modules %s))
+ (modules %s)
+ (libraries str))
 
 (rule
  (action

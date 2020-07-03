@@ -3,7 +3,8 @@
 
 (executable
  (name assorted_handlers)
- (modules assorted_handlers))
+ (modules assorted_handlers)
+ (libraries str))
 
 (rule
  (action
@@ -21,7 +22,8 @@
 (executable
  (name assorted_handlers_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules assorted_handlers_no_probes))
+ (modules assorted_handlers_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -36,7 +38,8 @@
 
 (executable
  (name backtrace_in_handler)
- (modules backtrace_in_handler))
+ (modules backtrace_in_handler)
+ (libraries str))
 
 (rule
  (action
@@ -54,7 +57,8 @@
 (executable
  (name backtrace_in_handler_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules backtrace_in_handler_no_probes))
+ (modules backtrace_in_handler_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -69,7 +73,8 @@
 
 (executable
  (name backtrace_in_handler_loop)
- (modules backtrace_in_handler_loop))
+ (modules backtrace_in_handler_loop)
+ (libraries str))
 
 (rule
  (action
@@ -87,7 +92,8 @@
 (executable
  (name backtrace_in_handler_loop_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules backtrace_in_handler_loop_no_probes))
+ (modules backtrace_in_handler_loop_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -102,7 +108,8 @@
 
 (executable
  (name exception_in_handler)
- (modules exception_in_handler))
+ (modules exception_in_handler)
+ (libraries str))
 
 (rule
  (action
@@ -120,7 +127,8 @@
 (executable
  (name exception_in_handler_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules exception_in_handler_no_probes))
+ (modules exception_in_handler_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -135,7 +143,8 @@
 
 (executable
  (name gc_in_handler)
- (modules gc_in_handler))
+ (modules gc_in_handler)
+ (libraries str))
 
 (rule
  (action
@@ -153,7 +162,8 @@
 (executable
  (name gc_in_handler_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules gc_in_handler_no_probes))
+ (modules gc_in_handler_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -168,7 +178,8 @@
 
 (executable
  (name gc_in_handler_deep_stack)
- (modules gc_in_handler_deep_stack))
+ (modules gc_in_handler_deep_stack)
+ (libraries str))
 
 (rule
  (action
@@ -186,7 +197,8 @@
 (executable
  (name gc_in_handler_deep_stack_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules gc_in_handler_deep_stack_no_probes))
+ (modules gc_in_handler_deep_stack_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -201,7 +213,8 @@
 
 (executable
  (name many_free_vars_in_handler)
- (modules many_free_vars_in_handler))
+ (modules many_free_vars_in_handler)
+ (libraries str))
 
 (rule
  (action
@@ -219,7 +232,8 @@
 (executable
  (name many_free_vars_in_handler_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules many_free_vars_in_handler_no_probes))
+ (modules many_free_vars_in_handler_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -234,7 +248,8 @@
 
 (executable
  (name printf_in_handler)
- (modules printf_in_handler))
+ (modules printf_in_handler)
+ (libraries str))
 
 (rule
  (action
@@ -252,7 +267,8 @@
 (executable
  (name printf_in_handler_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules printf_in_handler_no_probes))
+ (modules printf_in_handler_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -267,7 +283,8 @@
 
 (executable
  (name probe_in_handler)
- (modules probe_in_handler))
+ (modules probe_in_handler)
+ (libraries str))
 
 (rule
  (action
@@ -285,7 +302,8 @@
 (executable
  (name probe_in_handler_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules probe_in_handler_no_probes))
+ (modules probe_in_handler_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -300,7 +318,8 @@
 
 (executable
  (name probe_is_enabled)
- (modules probe_is_enabled))
+ (modules probe_is_enabled)
+ (libraries str))
 
 (rule
  (action
@@ -318,7 +337,8 @@
 (executable
  (name probe_is_enabled_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules probe_is_enabled_no_probes))
+ (modules probe_is_enabled_no_probes)
+ (libraries str))
 
 (rule
  (action
@@ -333,7 +353,8 @@
 
 (executable
  (name rec_probes)
- (modules rec_probes))
+ (modules rec_probes)
+ (libraries str))
 
 (rule
  (action
@@ -351,7 +372,8 @@
 (executable
  (name rec_probes_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules rec_probes_no_probes))
+ (modules rec_probes_no_probes)
+ (libraries str))
 
 (rule
  (action

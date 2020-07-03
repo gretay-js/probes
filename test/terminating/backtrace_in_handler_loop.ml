@@ -1,6 +1,9 @@
 let bt n =
-  Printf.printf "%d:\n" n;
-  Printexc.print_raw_backtrace stdout (Printexc.get_callstack 9999)
+  Printexc.get_callstack 9999
+  |> Printexc.raw_backtrace_to_string
+  (* Inlining depends on the optimization settings such as flambda *)
+  |> Str.global_replace (Str.regexp_string " (inlined)") ""
+  |> Printf.printf "%d:\n%s" n
 
 let () =
   let rec loop n =

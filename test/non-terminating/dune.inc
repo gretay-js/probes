@@ -3,7 +3,8 @@
 
 (executable
  (name test)
- (modules test))
+ (modules test)
+ (libraries str))
 
 (rule
  (action
@@ -21,7 +22,8 @@
 (executable
  (name test_no_probes)
  (ocamlopt_flags (:standard -no-probes))
- (modules test_no_probes))
+ (modules test_no_probes)
+ (libraries str))
 
 (rule
  (action

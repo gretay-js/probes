@@ -1,92 +1,92 @@
 0:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 8, characters 26-32
-Called from Dune__exe__Backtrace_in_handler_loop.loop.probe_handler_backtrace in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 8, characters 26-32
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 8, characters 6-33
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 11, characters 26-32
+Called from Dune__exe__Backtrace_in_handler_loop.loop.probe_handler_backtrace in file "test/terminating/backtrace_in_handler_loop.ml", line 11, characters 26-32
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 11, characters 6-33
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 1:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 2:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 3:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 4:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 5:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 6:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 7:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 8:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 9:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 10, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 13, characters 6-18
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
 10:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 3, characters 38-67
-Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml" (inlined), line 11, characters 6-10
-Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 2-9
+Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop.bt in file "test/terminating/backtrace_in_handler_loop.ml", line 2, characters 2-29
+Called from Dune__exe__Backtrace_in_handler_loop.loop in file "test/terminating/backtrace_in_handler_loop.ml", line 14, characters 6-10
+Called from Dune__exe__Backtrace_in_handler_loop in file "test/terminating/backtrace_in_handler_loop.ml", line 17, characters 2-9
