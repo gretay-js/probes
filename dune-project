@@ -1,6 +1,6 @@
 (lang dune 2.0)
 (formatting (enabled_for dune ocaml reason))
-(name probes)
+(name ocaml-probes)
 (version 0.0.1)
 
 (license MIT)
@@ -9,7 +9,7 @@
 (source (github gretay-js/ocamlfdo))
 
 (package
- (name probes-lib)
+ (name ocaml-probes-lib)
  (synopsis "USDT probes for OCaml: library")
  (description "
  User-space statically-defined tracing probes for OCaml.
@@ -23,7 +23,7 @@ Copyright (c) 2019 Jane Street Group LLC.
 )
 
 (package
- (name probes)
+ (name ocaml-probes)
  (synopsis "USDT probes for OCaml: command line tool")
  (description "
  User-space statically-defined tracing probes for OCaml.
@@ -35,7 +35,7 @@ Copyright (c) 2019 Jane Street Group LLC.
   (ocaml (>= 4.09))
   (dune (>= 1.8))
   dune-build-info
-  probes-lib
+  ocaml-probes-lib
   core
   ppx_jane
  )

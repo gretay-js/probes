@@ -1,6 +1,6 @@
 (library
  (name probes_lib)
- (public_name probes-lib)
+ (public_name ocaml-probes-lib)
  (libraries unix)
  (foreign_stubs
   (language c)

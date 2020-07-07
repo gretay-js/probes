@@ -1,10 +1,10 @@
 (executable
  (name probes)
- (public_name probes)
- (package probes)
+ (public_name ocaml-probes)
+ (package ocaml-probes)
  (ocamlopt_flags (:standard "-g"))
  (libraries
-        probes-lib
+        ocaml-probes-lib
         core
         dune-build-info
         )
