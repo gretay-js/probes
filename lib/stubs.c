@@ -255,7 +255,7 @@ static inline bool is_probe_enabled_in_code(pid_t cpid, unsigned long addr)
   __builtin_unreachable();
 }
 
-static inline bool is_enabled(signed long data)
+static inline bool is_enabled(signed short data)
 {
   return (data > 0);
 }
@@ -266,20 +266,25 @@ static inline bool modify_semaphore(pid_t cpid,
                                     unsigned long addr)
 {
   errno = 0;
-  // CR gyorsh: semaphore is only 2 bytes long, extract the 2 bytes,
+  // semaphore is only 2 bytes long, extract the 2 bytes,
   // modify, and put back.
   signed long cur_data = ptrace_get_data(cpid, (void *) addr);
+  signed short semaphore = (short) (cur_data & 0xffff);
   if (errno != 0) {
     signal_and_error(cpid, "modify_semaphore for probe in pid %d:\n\
                                    failed to PEEKDATA at %lx with errno %d\n",
                      cpid, addr, errno);
   }
-  if (cur_data < 0)
-    raise_error("Negative value %lx of semaphore at %lx in pid %d\n",
-                cur_data, addr, cpid);
+  if (semaphore < 0)
+    raise_error("Negative value %lx of semaphore %x at %lx in pid %d\n",
+                cur_data, semaphore, addr, cpid);
   if (verbose) fprintf (stderr, "old at %lx: %lx\n", addr, cur_data);
-  signed long delta = enable ? 1: -1;
-  signed long new_data = cur_data+delta;
+  short delta = enable ? 1: -1;
+  short new_semaphore = semaphore + delta;
+  if (new_semaphore < 0)
+    raise_error("Negative value after update of semaphore %x at %lx in pid %d\n",
+                new_semaphore, addr, cpid);
+  signed long new_data = (cur_data & ~0xffff) | ((long) new_semaphore);
   if (verbose) fprintf (stderr, "new at %lx: %lx\n", addr, new_data);
   if (new_data < 0)
     raise_error("modify_semaphore for probe in pid %d:"
@@ -291,23 +296,24 @@ static inline bool modify_semaphore(pid_t cpid,
                      "failed to POKEDATA at %lx new val=%lx with errno %d\n",
                      cpid, addr, new_data, errno);
   }
-  return (is_enabled(cur_data) != is_enabled(new_data));
+  return (is_enabled(semaphore) != is_enabled(new_semaphore));
 }
 
 static inline int get_semaphore(pid_t cpid, unsigned long addr)
 {
   errno = 0;
   signed long data = ptrace_get_data(cpid, (void *) addr);
+  signed short semaphore = (short) (data & 0xffff);
   if (errno != 0) {
     signal_and_error(cpid, "is_enabled probe in pid %d: "
                      "failed to PEEKDATA at %lx with errno %d\n",
                      cpid, addr, errno);
   }
   if (verbose) fprintf (stderr, "semaphore at %lx = %lx\n", addr, data);
-  if (data < 0)
-    raise_error("Negative value %lx of semaphore at %lx in pid %d\n",
-                data, addr, cpid);
-  return is_enabled(data);
+  if (semaphore < 0)
+    raise_error("Negative value %lx of semaphore %x at %lx in pid %d\n",
+                data, semaphore, addr, cpid);
+  return is_enabled(semaphore);
 }
 
 
