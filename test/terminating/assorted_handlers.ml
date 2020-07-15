@@ -31,7 +31,6 @@ let test1 x y =
   let fl = ((float_of_int x) /. (float_of_int y)) in
   [%probe "test_manyarg" (h1 "test_manyarg" x fl [x;y;z] (Some z))];
   z
-[@@inline never]
 
 let () =
   [%probe "main" (h3 "main" 0x45L)];
