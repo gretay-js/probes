@@ -309,7 +309,8 @@ static inline int get_semaphore(pid_t cpid, unsigned long addr)
                      "failed to PEEKDATA at %lx with errno %d\n",
                      cpid, addr, errno);
   }
-  if (verbose) fprintf (stderr, "semaphore at %lx = %lx\n", addr, data);
+  if (verbose) fprintf (stderr, "semaphore at %lx = %lx (short:%x)\n", addr, data,
+                        semaphore);
   if (semaphore < 0)
     raise_error("Negative value %lx of semaphore %x at %lx in pid %d\n",
                 data, semaphore, addr, cpid);
@@ -585,8 +586,8 @@ CAMLprim value caml_probes_lib_get_states (value v_internal,
   int b;
   for (int i = 0; i < n; i++) {
     const char *name = String_val(Field(v_names, i));
-    for (int i = 0; i < notes->num_probes; i++) {
-      struct probe_note *note = notes->probe_notes[i];
+    for (int j = 0; j < notes->num_probes; j++) {
+      struct probe_note *note = notes->probe_notes[j];
       if (!strcmp(name, note->name)) {
         if (!note->semaphore) {
           if (verbose) fprintf(stderr, "Semaphore not found for %s", name);
@@ -596,7 +597,9 @@ CAMLprim value caml_probes_lib_get_states (value v_internal,
           unsigned long addr = data_offset + note->semaphore;
           b = get_semaphore(cpid, addr);
         }
-        Store_field(v_states, i, Val_bool(b));
+        if (verbose) fprintf(stderr, "Semaphore %s is %s\n", name,
+                             (b?"true":"false"));
+        Store_field(v_states, i, (b? Val_true : Val_false));
         break;
       }
     }

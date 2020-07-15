@@ -1,20 +1,38 @@
+Hit p1
+Hit p2
+Hit p3
 0:p1
 1:p2
+2:p3
 p1 disabled
 p2 disabled
+p3 disabled
 Test p1
-p1 disabled
-p2 enabled
+p1 enabled
+p2 disabled
+p3 disabled
 p1 disabled
 p2 disabled
+p3 disabled
 Test p2
-p1 enabled
+p1 disabled
 p2 enabled
+p3 disabled
 p1 disabled
 p2 disabled
-p1 enabled
-p2 enabled
+p3 disabled
+Test p3
 p1 disabled
 p2 disabled
+p3 enabled
+p1 disabled
+p2 disabled
+p3 disabled
+p1 enabled
+p2 enabled
+p3 enabled
+p1 disabled
+p2 disabled
+p3 disabled
 Tracing test.exe with process id <pid> failed. Process <pid> killed with signal -7.
 

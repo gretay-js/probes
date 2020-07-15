@@ -216,7 +216,9 @@ let get_probe_states t =
   | Not_attached -> raise (Error "cannot get probe states: no pid\n")
   | Attached p ->
       Array.map2
-        (fun name enabled -> { name; enabled })
+        (fun name enabled ->
+           if !verbose then Printf.printf "%s enabled: %b\n" name enabled;
+           { name; enabled })
         t.probe_names
         (stub_get_states t.internal p.id p.mmap t.probe_names)
 
