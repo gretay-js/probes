@@ -1,9 +1,9 @@
 let bt n =
-  Printexc.get_callstack 9999
-  |> Printexc.raw_backtrace_to_string
-  (* Inlining depends on the optimization settings such as flambda *)
-  |> Str.global_replace (Str.regexp_string " (inlined)") ""
-  |> Printf.printf "%d:\n%s" n
+  (* Inlining and dbg info in the trace depends on the optimization settings
+     such as flambda, so we don't print the backtrace. *)
+  let len = Printexc.(get_callstack 9999
+                      |> raw_backtrace_length) in
+  Printf.printf "%d: is backtrace length > 10? %b\n" n (len > 10)
 
 let () =
   let rec loop n =

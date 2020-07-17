@@ -349,41 +349,6 @@
  (alias runtest)
  (action (diff probe_is_enabled_no_probes.expected probe_is_enabled_no_probes.output)))
 
-;;;; Test rec_probes.ml with probes
-
-(executable
- (name rec_probes)
- (modules rec_probes)
- (libraries str))
-
-(rule
- (action
-   (with-outputs-to rec_probes.output
-     (run ../test_trace.exe %{dep:rec_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff rec_probes.expected rec_probes.output)))
-
-;;;; Test rec_probes.ml without probes
-
-(rule (copy rec_probes.ml rec_probes_no_probes.ml))
-
-(executable
- (name rec_probes_no_probes)
- (ocamlopt_flags (:standard -no-probes))
- (modules rec_probes_no_probes)
- (libraries str))
-
-(rule
- (action
-   (with-outputs-to rec_probes_no_probes.output
-     (run ../test_trace.exe %{dep:rec_probes_no_probes.exe}))))
-
-(rule
- (alias runtest)
- (action (diff rec_probes_no_probes.expected rec_probes_no_probes.output)))
-
 ;;;; Test test.ml with probes
 
 (executable

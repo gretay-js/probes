@@ -1,76 +1,10 @@
-1:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-2:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-3:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-4:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-5:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-6:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-7:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-8:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-9:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 13, characters 6-18
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
-10:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_loop_no_probes.bt in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes.loop in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 14, characters 6-10
-Called from Dune__exe__Backtrace_in_handler_loop_no_probes in file "test/terminating/backtrace_in_handler_loop_no_probes.ml", line 17, characters 2-9
+1: is backtrace length > 10? true
+2: is backtrace length > 10? false
+3: is backtrace length > 10? false
+4: is backtrace length > 10? false
+5: is backtrace length > 10? false
+6: is backtrace length > 10? false
+7: is backtrace length > 10? false
+8: is backtrace length > 10? false
+9: is backtrace length > 10? false
+10: is backtrace length > 10? false
