@@ -1,6 +1,6 @@
 0: is backtrace length > 10? true
 1: is backtrace length > 10? true
-2: is backtrace length > 10? false
+2: is backtrace length > 10? true
 3: is backtrace length > 10? false
 4: is backtrace length > 10? false
 5: is backtrace length > 10? false

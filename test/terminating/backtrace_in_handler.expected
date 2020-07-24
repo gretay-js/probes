@@ -3,8 +3,6 @@ Raised by primitive operation at Dune__exe__Backtrace_in_handler.bt in file "tes
 Called from Dune__exe__Backtrace_in_handler in file "test/terminating/backtrace_in_handler.ml", line 9, characters 2-13
 Inside:
 Raised by primitive operation at Dune__exe__Backtrace_in_handler.bt in file "test/terminating/backtrace_in_handler.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler in file "test/terminating/backtrace_in_handler.ml", line 10, characters 22-35
-Called from Dune__exe__Backtrace_in_handler.probe_handler_backtrace in file "test/terminating/backtrace_in_handler.ml", line 10, characters 22-35
 Called from Dune__exe__Backtrace_in_handler in file "test/terminating/backtrace_in_handler.ml", line 10, characters 2-36
 After:
 Raised by primitive operation at Dune__exe__Backtrace_in_handler.bt in file "test/terminating/backtrace_in_handler.ml", line 2, characters 2-29
