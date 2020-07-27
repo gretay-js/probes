@@ -419,6 +419,41 @@
  (alias runtest)
  (action (diff probe_is_enabled_no_probes.expected probe_is_enabled_no_probes.output)))
 
+;;;; Test raise_in_probe.ml with probes
+
+(executable
+ (name raise_in_probe)
+ (modules raise_in_probe)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to raise_in_probe.output
+     (run ../test_trace.exe %{dep:raise_in_probe.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff raise_in_probe.expected raise_in_probe.output)))
+
+;;;; Test raise_in_probe.ml without probes
+
+(rule (copy raise_in_probe.ml raise_in_probe_no_probes.ml))
+
+(executable
+ (name raise_in_probe_no_probes)
+ (ocamlopt_flags (:standard -no-probes))
+ (modules raise_in_probe_no_probes)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to raise_in_probe_no_probes.output
+     (run ../test_trace.exe %{dep:raise_in_probe_no_probes.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff raise_in_probe_no_probes.expected raise_in_probe_no_probes.output)))
+
 ;;;; Test rec_probes.ml with probes
 
 (executable
