@@ -174,6 +174,76 @@
  (alias runtest)
  (action (diff exception_in_handler_no_probes.expected exception_in_handler_no_probes.output)))
 
+;;;; Test gc_in_handler.ml with probes
+
+(executable
+ (name gc_in_handler)
+ (modules gc_in_handler)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to gc_in_handler.output
+     (run ../test_trace.exe %{dep:gc_in_handler.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff gc_in_handler.expected gc_in_handler.output)))
+
+;;;; Test gc_in_handler.ml without probes
+
+(rule (copy gc_in_handler.ml gc_in_handler_no_probes.ml))
+
+(executable
+ (name gc_in_handler_no_probes)
+ (ocamlopt_flags (:standard -no-probes))
+ (modules gc_in_handler_no_probes)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to gc_in_handler_no_probes.output
+     (run ../test_trace.exe %{dep:gc_in_handler_no_probes.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff gc_in_handler_no_probes.expected gc_in_handler_no_probes.output)))
+
+;;;; Test gc_in_handler_deep_stack.ml with probes
+
+(executable
+ (name gc_in_handler_deep_stack)
+ (modules gc_in_handler_deep_stack)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to gc_in_handler_deep_stack.output
+     (run ../test_trace.exe %{dep:gc_in_handler_deep_stack.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff gc_in_handler_deep_stack.expected gc_in_handler_deep_stack.output)))
+
+;;;; Test gc_in_handler_deep_stack.ml without probes
+
+(rule (copy gc_in_handler_deep_stack.ml gc_in_handler_deep_stack_no_probes.ml))
+
+(executable
+ (name gc_in_handler_deep_stack_no_probes)
+ (ocamlopt_flags (:standard -no-probes))
+ (modules gc_in_handler_deep_stack_no_probes)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to gc_in_handler_deep_stack_no_probes.output
+     (run ../test_trace.exe %{dep:gc_in_handler_deep_stack_no_probes.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff gc_in_handler_deep_stack_no_probes.expected gc_in_handler_deep_stack_no_probes.output)))
+
 ;;;; Test many_free_vars_in_handler.ml with probes
 
 (executable
