@@ -104,6 +104,41 @@
  (alias runtest)
  (action (diff backtrace_in_handler_loop_no_probes.expected backtrace_in_handler_loop_no_probes.output)))
 
+;;;; Test comballoc.ml with probes
+
+(executable
+ (name comballoc)
+ (modules comballoc)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to comballoc.output
+     (run ../test_trace.exe %{dep:comballoc.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff comballoc.expected comballoc.output)))
+
+;;;; Test comballoc.ml without probes
+
+(rule (copy comballoc.ml comballoc_no_probes.ml))
+
+(executable
+ (name comballoc_no_probes)
+ (ocamlopt_flags (:standard -no-probes))
+ (modules comballoc_no_probes)
+ (libraries str))
+
+(rule
+ (action
+   (with-outputs-to comballoc_no_probes.output
+     (run ../test_trace.exe %{dep:comballoc_no_probes.exe}))))
+
+(rule
+ (alias runtest)
+ (action (diff comballoc_no_probes.expected comballoc_no_probes.output)))
+
 ;;;; Test cond_probes.ml with probes
 
 (executable
