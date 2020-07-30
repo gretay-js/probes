@@ -1,6 +1,2 @@
-Before:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_no_probes.bt in file "test/terminating/backtrace_in_handler_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_no_probes in file "test/terminating/backtrace_in_handler_no_probes.ml", line 9, characters 2-13
-After:
-Raised by primitive operation at Dune__exe__Backtrace_in_handler_no_probes.bt in file "test/terminating/backtrace_in_handler_no_probes.ml", line 2, characters 2-29
-Called from Dune__exe__Backtrace_in_handler_no_probes in file "test/terminating/backtrace_in_handler_no_probes.ml", line 11, characters 2-12
+Before is backtrace length > 2? true
+After is backtrace length > 2? true

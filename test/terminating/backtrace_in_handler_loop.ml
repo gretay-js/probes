@@ -3,7 +3,8 @@ let bt n =
      such as flambda, so we don't print the backtrace. *)
   let len = Printexc.(get_callstack 9999
                       |> raw_backtrace_length) in
-  Printf.printf "%d: is backtrace length > 10? %b\n" n (len > 10)
+  if n = 0 then
+    Printf.printf "is backtrace length > 10? %b\n" (len > 10)
 
 let () =
   let rec loop n =
