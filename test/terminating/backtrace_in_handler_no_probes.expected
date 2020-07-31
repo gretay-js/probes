@@ -1,2 +1,2 @@
-Before is backtrace length > 2? true
-After is backtrace length > 2? true
+Before is backtrace length >= 2? true
+After is backtrace length >= 2? true
