@@ -1,20 +1,21 @@
 (* Example with a probe that allocates and calls a gc *)
 
 let h b =
-  prerr_float b;
-  prerr_newline ();
+  print_float b;
+  print_newline ();
   Gc.full_major ();
-  prerr_float b;
-  prerr_newline ();
+  print_float b;
+  print_newline ();
   ()
 
 let[@inline never] g b =
-  prerr_float b;
-  prerr_newline ();
+  print_float b;
+  print_newline ();
   Gc.full_major ();
-  prerr_float b;
-  prerr_newline ();
+  print_float b;
+  print_newline ();
   ()
+
 
 let foo b =
   [%probe "fooia" (h b)];
@@ -22,5 +23,5 @@ let foo b =
   ()
 
 let () =
-  foo (Float.of_int (Sys.opaque_identity 1)) |> ignore;
+  foo (Float.of_int (Sys.opaque_identity 1));
   ()
